@@ -98,14 +98,18 @@ public class Elevator extends Thread implements Runnable{
 	 * This method adds the floor number into required floor list.
 	 */
 	public void chooseFloor(int floorNum) {
-		this.reqFloors.add(floorNum);
+		if (!reqFloors.contains(floorNum)){
+			this.reqFloors.add(floorNum);
+		}		
 	}
 	
 	/**
 	 * This method removes the floor number from the required floor list.
 	 */
 	public void removeFloor(int floorNum) {
-		this.reqFloors.remove(floorNum);
+		if (reqFloors.contains(floorNum)){
+			this.reqFloors.remove(floorNum);
+		}
 	}
 	
 	//Replaces moveToFloor
