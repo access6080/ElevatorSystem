@@ -1,6 +1,10 @@
 import java.util.ArrayList;
-
-
+/**
+ * The Elevator class models the elevator component.
+ * 
+ * @author Saad Eid
+ * @version January 31th, 2023
+ */
 public class Elevator extends Thread implements Runnable{
 
 	private static final int IDLE = 0;
@@ -18,7 +22,10 @@ public class Elevator extends Thread implements Runnable{
 	private MessageQueue queue;
 	private ArrayList<Integer> reqFloors;
 		
-	
+	/**
+	 *  Constructor of the elevator class.
+	 *  Instantiates the the data structure - arraylist and message queue
+	 */
 	public Elevator (int elevatorNum, int numFloors) {
 		this.elevatorNum = elevatorNum;
 		this.numFloors = numFloors;
@@ -31,35 +38,54 @@ public class Elevator extends Thread implements Runnable{
 		this.queue = new MessageQueue();
 	}
 	
-	public synchronized void moveUp() {
+	/**
+	 * This method moves the elevator up.
+	 */
+	public void moveUp() {
 		System.out.println("Now moving up.");
 		movingUp = true;
 		movingDown = false;
 		currentDirection = UP;
 	}
 	
+	/**
+	 * This method returns whether if the elevator is moving up.
+	 */
 	public boolean isMovingUp() {
 		return this.movingUp;
 	}
 	
-	public synchronized void moveDown() {
+	/**
+	 * This method moves the elevator down.
+	 */
+	public void moveDown() {
 		System.out.println("Now moving down.");
 		movingUp = false;
 		movingDown = true;
 		currentDirection = DOWN;
 	}
 	
+	/**
+	 * This method returns whether if the elevator is moving up.
+	 */
 	public boolean isMovingDown() {
 		return this.movingDown;
 	}
 	
-	public synchronized void stopElevator() {
+	/**
+	 * This method stops the elevator.
+	 */
+	public void stopElevator() {
 		System.out.println("The elevator is stopping.");
 		movingUp = false;
 		movingDown = false;
+		currentDirection = IDLE;
 		System.out.println("The elevator is stopped.");
 	}
 	
+	/**
+	 * This method returns whether if the elevator is at idle.
+	 */
 	public boolean isIdle() {
 		if (currentDirection == IDLE) {
 			return true;
@@ -68,16 +94,24 @@ public class Elevator extends Thread implements Runnable{
 		}
 	}
 	
-	
+	/**
+	 * This method adds the floor number into required floor list.
+	 */
 	public void chooseFloor(int floorNum) {
 		this.reqFloors.add(floorNum);
 	}
 	
+	/**
+	 * This method removes the floor number from the required floor list.
+	 */
 	public void removeFloor(int floorNum) {
 		this.reqFloors.remove(floorNum);
 	}
 	
 	//Replaces moveToFloor
+	/**
+	 * This method moves the elevator up by one floor.
+	 */
 	public void moveOneFloor() {
 		switch (currentDirection) {
 			case UP:
@@ -101,6 +135,9 @@ public class Elevator extends Thread implements Runnable{
 		}
 	}
 	
+	/**
+	 * This method opens the door of the elevator.
+	 */
 	public void openDoor() {
 		System.out.println("The doors are opening.");
 		try {
@@ -113,6 +150,9 @@ public class Elevator extends Thread implements Runnable{
 		this.doorOpen = true;		
 	}
 	
+	/**
+	 * This method closes the door of the elevator.
+	 */
 	public void closeDoor(){
 		System.out.println("The doors are closing.");
 		try {
@@ -125,10 +165,16 @@ public class Elevator extends Thread implements Runnable{
 		this.doorOpen = false;
 	}
 	
+	/**
+	 * This method returns whether the door of the elevator is open.
+	 */
 	public boolean isDoorOpen() {
 		return this.doorOpen;
 	}
 	
+	/**
+	 * This method returns whether the elevator is ready to move.
+	 */
 	public boolean isElevatorReady() {
 		return this.elevatorReady;
 	}
