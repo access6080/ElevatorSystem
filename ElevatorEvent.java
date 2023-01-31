@@ -1,3 +1,3 @@
-public record ElevatorEvent(int time, int floorNumber, int button) {
+public record ElevatorEvent(int time, int currentFloor, int button) {
     
 }
