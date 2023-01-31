@@ -1,4 +1,5 @@
 import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * The Scheduler class models the Scheduler component of the  Elevator system.
@@ -35,7 +36,7 @@ public class Scheduler implements Runnable {
      *
      * @throws InterruptedException thrown when the thread is interrupted
      */
-    private void retrieveAndSchedule() throws InterruptedException {
+    public void retrieveAndSchedule() throws InterruptedException {
         Message newMessage = messageQueue.getMessage(PRIORITY);
 
         if(newMessage == null) return;
@@ -53,7 +54,7 @@ public class Scheduler implements Runnable {
 
             //Log Event
 
-            Message res = new Message(req.elevatorNum, ElevatorSystemComponent.Scheduler, jobQueue.poll());
+            Message res = new Message(req.elevatorNum(), ElevatorSystemComponent.Scheduler, jobQueue.poll());
 
             messageQueue.addMessage(res);
 
