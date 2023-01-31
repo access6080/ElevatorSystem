@@ -7,7 +7,7 @@ import static org.junit.Assert.*;
  * This class is a test case for the ElevatorEvent class.
  *
  * @author Oluwatomisin Ajayi
- * @author January 30th, 2023
+ * @version January 30th, 2023
  */
 public class ElevatorEventTest {
     private ElevatorEvent event;
