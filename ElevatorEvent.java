@@ -2,7 +2,7 @@
  * This record encapsulates an event occurring in the ElevatorSystem.
  *
  * @author Oluwatomisin Ajayi
- * @vesrsion January 30th, 2023
+ * @version January 30th, 2023
  *
  * @param time the time it takes for the simulation to occur.
  * @param currentFloor the current floor of the elevator in the simulation.
