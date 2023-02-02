@@ -22,7 +22,7 @@ public class Logger {
 
     /**
      *  This method logs an error whenever it occurs in the ElevatorSystem.
-     * @param message
+     * @param message the message to be printed when an error occurs.
      */
     public void error(String message){
         StringBuilder log = formatLog(" ERROR: ", message);
@@ -33,7 +33,7 @@ public class Logger {
 
     /**
      * This method logs information of what happens in the ElevatorSystem.
-     * @param message
+     * @param message the message to be printed when information is sent.
      */
     public void info(String message){
         StringBuilder log = formatLog(" INFO: ", message);
@@ -44,9 +44,9 @@ public class Logger {
 
     /**
      * This method returns the format of the logger file.
-     * @param level
-     * @param message
-     * @return
+     * @param level the type of message to be printed.
+     * @param message the message to be printed.
+     * @return returns the formatted message.
      */
     private static StringBuilder formatLog(String level, String message) {
         StringBuilder log = new StringBuilder();
@@ -59,7 +59,7 @@ public class Logger {
 
     /**
      * This method saves the information in the logger to a file.
-     * @throws IOException
+     * @throws IOException this method is thrown when an IO error occurs.
      */
     public void save() throws IOException {
         LocalDateTime now = LocalDateTime.now();
