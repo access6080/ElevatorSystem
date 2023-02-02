@@ -19,6 +19,15 @@ public class Scheduler implements Runnable {
     /** FIFO Queue for elevator jobs */
     private final Queue<ElevatorEvent> jobQueue;
 
+    /** Logger for logging events **/
+    private final Logger logger;
+
+    /** A flag that tells the scheduler to shutdown **/
+    private boolean shutdown;
+
+    /** A constant tells the system a shut-down event being requested **/
+    public static int SHUTDOWN = -1;
+
     /**
      * The constructor of the scheduler class.
      *
@@ -26,7 +35,9 @@ public class Scheduler implements Runnable {
      */
     public Scheduler(MessageQueue queue) {
         this.messageQueue = queue;
+        this.shutdown = false;
         this.jobQueue = new LinkedList<>();
+        this.logger = new Logger();
     }
 
     /**
@@ -45,6 +56,10 @@ public class Scheduler implements Runnable {
             ElevatorEvent event = (ElevatorEvent) newMessage.data();
 
             //Log Event
+            logger.info("Received a message from Floor Subsystem");
+
+            setShutDownFlag(event.time());
+
 
             jobQueue.add(event);
         }
@@ -53,13 +68,37 @@ public class Scheduler implements Runnable {
             ElevatorRequest req = (ElevatorRequest) newMessage.data();
 
             //Log Event
+            logger.info("Received a request from Elevator");
 
-            Message res = new Message(req.elevatorNum(), ElevatorSystemComponent.Scheduler, jobQueue.poll());
+            ElevatorEvent job = jobQueue.poll();
+            if(job == null) return;
 
+            Message res = new Message(req.elevatorNum(), ElevatorSystemComponent.Scheduler, job);
             messageQueue.addMessage(res);
 
             //Log Event
+            logger.info("Sent a Job to the Elevator");
         }
+    }
+
+    /**
+     * This method tells the system to shuts down or keep operating.
+     * If it is shutting down it sends out a shut-down request to the elevator.
+     */
+    private void continueOrShutDown() {
+        if(this.shutdown && jobQueue.isEmpty() && !messageQueue.hasAMessage(Scheduler.PRIORITY)) {
+            logger.info("Shutting Down");
+
+            this.messageQueue.addMessage(new Message(SHUTDOWN, ElevatorSystemComponent.Scheduler, null));
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * This method sets the flag that tells the elevator to shut down
+     */
+    public void setShutDownFlag(int time){
+        if(time == SHUTDOWN) this.shutdown = true;
     }
 
     /**
@@ -68,12 +107,16 @@ public class Scheduler implements Runnable {
      */
     @Override
     public void run() {
+        logger.info("Scheduler Service Started");
         while(Thread.currentThread().isAlive()){
+            if(Thread.currentThread().isInterrupted()) break;
             try {
                 retrieveAndSchedule();
             } catch (InterruptedException e) {
+                logger.error(e.getMessage());
                 throw new RuntimeException(e);
             }
+            continueOrShutDown();
         }
     }
 }

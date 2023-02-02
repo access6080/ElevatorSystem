@@ -1,4 +1,4 @@
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * The MessageQueue class is a custom implementation of a messaging queue
@@ -12,14 +12,16 @@ import java.util.ArrayList;
  */
 public class MessageQueue {
     /** The backing data structure of the Message queue class*/
-    private final ArrayList<Message> queue;
+    private final LinkedList<Message> elevatorlist;
+    private final LinkedList<Message> schedulerList;
 
     /**
      * Constructor of the MessageQueue class.
      * It instantiates the backing data structure - the arraylist.
      */
     public MessageQueue() {
-        this.queue = new ArrayList<>();
+        this.elevatorlist = new LinkedList<>();
+        this.schedulerList = new LinkedList<>();
     }
 
     /**
@@ -30,21 +32,17 @@ public class MessageQueue {
      * @throws InterruptedException this method is thrown when the thread is interrupted
      */
     public synchronized Message getMessage(int priority) throws InterruptedException {
-        while(isEmpty()){
-            wait();
-        }
+        if(!isEmpty()) {
+            if (priority == Scheduler.PRIORITY) {
+                return this.schedulerList.pollFirst();
+            }
 
-        Message msg = null;
-        for(Message m : queue){
-            if(m.priority() == priority) {
-                msg = m;
+            if (priority > Scheduler.PRIORITY) {
+                return this.elevatorlist.pollFirst();
             }
         }
 
-        queue.remove(msg);
-
-        notifyAll();
-        return msg;
+        return null;
     }
 
     /**
@@ -52,7 +50,9 @@ public class MessageQueue {
      * @param m the message being added to the queue.
      */
     public synchronized void addMessage(Message m){
-        queue.add(m);
+        if(m.priority() == Scheduler.PRIORITY) this.schedulerList.addLast(m);
+
+        if(m.priority() > Scheduler.PRIORITY) this.elevatorlist.addLast(m);
     }
 
     /**
@@ -60,7 +60,7 @@ public class MessageQueue {
      * @return true if queue is empty and false otherwise.
      */
     private boolean isEmpty(){
-        return queue.size() == 0;
+        return (elevatorlist.size() + schedulerList.size()) == 0;
     }
 
     /**
@@ -69,6 +69,20 @@ public class MessageQueue {
      * @return the size of the queue.
      */
     public synchronized int size(){
-        return queue.size();
+        return (elevatorlist.size() + schedulerList.size());
+    }
+
+    /**
+     * This method checks if a message exists for a specified priority.
+     *
+     * @param priority the priority of the message
+     * @return true if a message exist for the specified priority and false otherwise.
+     */
+    public boolean hasAMessage(int priority) {
+        if(priority == Scheduler.PRIORITY) return schedulerList.size() != 0;
+
+        if(priority > Scheduler.PRIORITY) return elevatorlist.size() != 0;
+
+        return false;
     }
 }

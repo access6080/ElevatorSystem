@@ -1,23 +1,17 @@
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.Before;
+import org.junit.Test;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-class ElevatorTest {
+public class ElevatorTest {
 
 	private Elevator elevator;
-	private int elevatorNum = 1;
-	private int numFloors = 10;
+	private MessageQueue queue;
 
-	@BeforeEach
-	void setUp() throws Exception {
-		this.elevator = new Elevator(elevatorNum, numFloors);
+	@Before
+	public void setUp() throws Exception {
+		int elevatorNum = 1;
+		int numFloors = 10;
+
+		this.queue = new MessageQueue();
+		this.elevator = new Elevator(elevatorNum, numFloors, queue);
 	}
-
-	@Test
-	void test() {
-		fail("Not yet implemented");
-	}
-
 }

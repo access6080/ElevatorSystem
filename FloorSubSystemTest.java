@@ -6,11 +6,13 @@ import org.junit.Test;
  * this class tests the method getData() in the FloorSubSystem class.
  */
 public class FloorSubSystemTest {
-    private FloorSubSystem model;
+    private FloorSubSystem floorSubSystem;
+    MessageQueue queue;
 
     @Before
-    public void Setup(){
-        model = new FloorSubSystem();
+    public void setup(){
+        this.queue = new MessageQueue();
+        floorSubSystem = new FloorSubSystem(queue);
     }
 
     @After

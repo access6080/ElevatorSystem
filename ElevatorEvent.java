@@ -8,6 +8,4 @@
  * @param currentFloor the current floor of the elevator in the simulation.
  * @param button the number of the next floor the elevator goes to.
  */
-public record ElevatorEvent(int time, int currentFloor, int button) {
-    
-}
+public record ElevatorEvent(int time, int currentFloor, int button) {}

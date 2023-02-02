@@ -14,7 +14,7 @@ import java.util.ArrayList;
  * @version January 31st, 2023
  */
 public class Logger {
-    public ArrayList<String> logs;
+    private final ArrayList<String> logs;
 
     public Logger(){
         logs = new ArrayList<>();
