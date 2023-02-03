@@ -43,6 +43,24 @@ public class Elevator extends Thread implements Runnable{
 	}
 	
 	/**
+	 * This method returns the current floor
+	 * 
+	 * @return the current floor of the elevator
+	 */
+	public int getCurrFloor() {
+		return this.currFloor;
+	}
+	
+	/**
+	 * This method returns the current floor
+	 * 
+	 * @return the reqFloor arraylist
+	 */
+	public ArrayList<Integer> getReqFloors() {
+		return this.reqFloors;
+	}
+	
+	/**
 	 * This method moves the elevator up.
 	 */
 	public void moveUp() {
