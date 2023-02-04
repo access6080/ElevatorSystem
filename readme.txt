@@ -1,0 +1,56 @@
+Elevator System
+ 
+This is a simple system that models the working of an Elevator using Java threads and synchronization.
+
+The project developers can be contacted at
+- @bomaiyaye@cmail.carleton.ca
+- @geofferykoranteng@cmail.carleton.ca
+- @chibuzookpara@cmail.carleton.ca
+- @tomisinajayi@cmail.carleton.ca
+- @saadeid@cmail.carleton.ca
+
+Description: 
+This is a java object oriented model of the elevator systems in a building 
+
+This system comtains the following classes:
+Elevator.java                        ElevatorSystem.java
+ElevatorEvent.java                   ElevatorSystemComponent.java
+ElevatorEventTest.java               ElevatorTest.java
+ElevatorRequest.java                 FloorSubSystem.java
+ElevatorRequestTest.java             FloorSubSystemTest.java                         
+Message.java                         Logger.java
+MessageQueue.java                    Schedular.java  
+MessageQueueTest.java                SchedularTest.java
+MessageTest.java
+data.txt
+file.csv
+
+Installation :
+
+Issues:
+-There are currently no issues with the system at this iteration of the project, it works exactly as expected.
+
+Usage:
+
+Credits:
+Boma Iyaye
+-ElevatorRequest.Java
+-ElevatorRequestTest.java
+-Logger.java
+Geoffery Koranteng
+-
+-
+-
+Chibuzo Okpara
+-
+-
+-
+Ajayi, Tomisin
+-
+-
+-
+Eid, Saad
+-
+-
+-
+copyrigths belong to SYSC 3303 Group 4 2023
