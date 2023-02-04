@@ -51,7 +51,7 @@ Ajayi, Tomisin
 -ElevatorEventTest.java
 -Sequence Diagram
 Eid, Saad
--
--
--
+-Elevator.java
+-ElevatorTest.java
+
 copyrigths belong to SYSC 3303 Group 4 2023
