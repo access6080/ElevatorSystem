@@ -2,9 +2,10 @@ import java.io.*;
 import java.util.Scanner;
 
 /**
- *this class reads the csv file that contains all the data pertaining to the time, floor and button(floor to achieve)
+ *this class reads the text file that contains all the data pertaining to the time, floor and button(floor to achieve)
  * the class stores all the data then creates and adds a message to the queue delivered to the scheduler
  * @author Chibuzo Okpara
+ * @author Geoffery koranteng
  * @version January 29th, 2023
  */
 public class FloorSubSystem implements Runnable{
@@ -19,10 +20,10 @@ public class FloorSubSystem implements Runnable{
 
     /**
      *this method reads the csv file as well as create a message object that is added to the queue of messages
-     * @param filename name of the csv file
+     * @param filename name of the text file
      * @throws FileNotFoundException This exception is thrown when the file being open is not found
      */
-    private void getData(String filename) throws FileNotFoundException {
+    public void getData(String filename) throws FileNotFoundException {
         File file = new File(filename);
         Scanner reader = new Scanner(file);
         reader.nextLine();
