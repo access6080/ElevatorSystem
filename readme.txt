@@ -42,13 +42,14 @@ Geoffery Koranteng
 -
 -
 Chibuzo Okpara
--
--
+-FloorSubSystem.java
+-FloorSubSystemTest.java
 -
 Ajayi, Tomisin
--
--
--
+-ElevatorEvent.java
+-Logger.java
+-ElevatorEventTest.java
+-Sequence Diagram
 Eid, Saad
 -
 -
