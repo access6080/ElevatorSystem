@@ -26,6 +26,8 @@ data.txt
 file.csv
 
 Installation :
+Open the directory in eclipse.
+Click the run.
 
 Issues:
 -There are currently no issues with the system at this iteration of the project, it works exactly as expected.
