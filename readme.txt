@@ -10,7 +10,7 @@ The project developers can be contacted at
 - @saadeid@cmail.carleton.ca
 
 Description: 
-This is a java object oriented model of the elevator systems in a building.
+This is a java object oriented model of the elevator systems in a building.It models the floor subsystem,Elevator Subsystem and schedular.
 
 This system comtains the following classes:
 Elevator.java                        ElevatorSystem.java
