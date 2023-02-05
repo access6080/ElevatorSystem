@@ -30,8 +30,6 @@ Installation :
 Issues:
 -There are currently no issues with the system at this iteration of the project, it works exactly as expected.
 
-Usage:
-
 Credits:
 Boma Iyaye
 -ElevatorRequest.Java
