@@ -235,7 +235,7 @@ public class Elevator extends Thread implements Runnable{
 	}
 
 	/**
-	 * This method checks  the message queue for any message sent to the Elevator.
+	 * This method checks the message queue for any message sent to the Elevator.
 	 */
 	private void retrieveResponse() {
 		Message receivedMessage;
