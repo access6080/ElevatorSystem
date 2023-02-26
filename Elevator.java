@@ -6,7 +6,7 @@ import java.util.ArrayList;
  * @author Saad Eid
  * @version January 31st, 2023
  */
-public class Elevator extends Thread implements Runnable{
+public class Elevator extends Thread{
 
 	private static final int IDLE = 0;
 	private static final int UP = 1;
@@ -234,32 +234,6 @@ public class Elevator extends Thread implements Runnable{
 		return this.elevatorReady;
 	}
 
-	/**
-	 * This method checks  the message queue for any message sent to the Elevator.
-	 */
-	private void retrieveResponse() {
-		Message receivedMessage;
-
-
-		try {
-			receivedMessage = queue.getMessage(this.elevatorNum);
-		} catch (InterruptedException e) {
-			logger.error(e.getMessage());
-			throw new RuntimeException(e);
-		}
-
-		if(receivedMessage == null) return;
-
-		ElevatorEvent job = (ElevatorEvent) receivedMessage.data();
-
-		if(job.button() == Scheduler.SHUTDOWN) {
-			setShutdownFlag();
-			return;
-		}
-
-		logger.info("Received a Job from the scheduler");
-		reqFloors.add(job.button());
-	}
 
 	/**
 	 * This method sets the flag that tells the elevator to shut down
@@ -290,12 +264,102 @@ public class Elevator extends Thread implements Runnable{
 		logger.info("Sent a job request to the Scheduler");
 	}
 
+	
+	/**
+	 * This implementation of the ElevatorSubsystem Class
+	 * Receives packets from the Scheduler and forwards them to the corresponding elevator
+	 * RECEIVES ONLY, sending is handled by each respective elevator
+	 * 
+	 * @author Saad Eid
+	 */
+
+	public class ElevatorSubsystem extends Thread {
+		
+		//List of elevators
+		private Elevator elevatorList[];
+		
+		
+		/**
+		 * Create a new elevator subsystem with numElevators and numFloors
+		 * @param numElevators the number of elevators in the system
+		 */
+		public ElevatorSubsystem(int numFloors, int numElevators) {
+			elevatorList = new Elevator[numElevators];
+			
+			//Initialize the elevators
+			for (int i = 0; i < numElevators; i ++) {
+				elevatorList[i] = (new Elevator(i, numFloors, new MessageQueue()));
+			}	
+		}
+		
+
+		/**
+		 * Returns the elevator with the corresponding elevator number
+		 * @param elevatorNum the elevator number
+		 * @return corresponding elevator
+		 */
+		public Elevator getElevator(int elevatorNum) {
+			return elevatorList[elevatorNum];
+		}
+		
+		
+		/**
+		 * Print a status message in the console
+		 * @param message the message to be printed
+		 */
+		public void print(String message) {
+			System.out.println("Elevator Subsystem: " + message);
+		}
+		
+		/**
+		 * Wait for the specified amount of time
+		 * @param ms
+		 */
+		public void wait(int ms) {
+			try {
+				Thread.sleep(ms);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		
+		/**
+		 * This method checks the message queue for any message sent to the Elevator.
+		 */
+		private void retrieveResponse() {
+			Message receivedMessage;
+
+
+			try {
+				receivedMessage = queue.getMessage(elevatorNum);
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				throw new RuntimeException(e);
+			}
+
+			if(receivedMessage == null) return;
+
+			ElevatorEvent job = (ElevatorEvent) receivedMessage.data();
+
+			if(job.button() == Scheduler.SHUTDOWN) {
+				setShutdownFlag();
+				return;
+			}
+
+			logger.info("Received a Job from the scheduler");
+			reqFloors.add(job.button());
+		}	
+	}
+	
 	/**
 	 * This method is implemented from the runnable interface
 	 * and allows this class to be run by a thread instance.
 	 */
 	@Override
 	public void run() {
+		int numFloors = 22, numElevators = 1;				
+		ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(numFloors, numElevators);
 		logger.info("Elevator " + elevatorNum + " started.");
 		while (Thread.currentThread().isAlive()) {
 			if(Thread.currentThread().isInterrupted()) break;
@@ -306,7 +370,7 @@ public class Elevator extends Thread implements Runnable{
 			}
 
 			// Check for a response from the scheduler
-			retrieveResponse();
+			elevatorSubsystem.retrieveResponse();
 
 
 			// If there are requested floors, and the elevator is ready to move
