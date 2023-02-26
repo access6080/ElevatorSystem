@@ -36,7 +36,7 @@ public class Logger {
      * @param message the message to be printed when information is sent.
      */
     public void info(String message){
-        StringBuilder log = formatLog(" INFO: ", message);
+        StringBuilder log = formatLog("INFO", message);
 
         logs.add(log.toString());
         System.out.println(log);
@@ -52,8 +52,11 @@ public class Logger {
         StringBuilder log = new StringBuilder();
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
-        log.append("[").append(Thread.currentThread().getName()).append("] ")
-                .append(dtf.format(now)).append(level).append(message);
+//         log.append("[").append(Thread.currentThread().getName()).append("] ")
+//                 .append(dtf.format(now)).append(level).append(message);
+        log.append("[Time: ").append(dtf.format(now)).append("] [ELEVATOR] [Class: ")
+                .append(Thread.currentThread().getName()).append("] [").append(level).
+                append("] ").append(message);
         return log;
     }
 
