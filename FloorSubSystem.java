@@ -12,7 +12,7 @@ public class FloorSubSystem implements Runnable{
 
     private final MessageQueue queue;
     private final Logger logger;
-
+    public static int PRIORITY = -1;
     public FloorSubSystem(MessageQueue queue){
         this.queue = queue;
         this.logger = new Logger();
@@ -28,6 +28,17 @@ public class FloorSubSystem implements Runnable{
         Scanner reader = new Scanner(file);
         reader.nextLine();
         while(reader.hasNextLine()){
+            Message receivedMessage;
+            if(queue.hasAMessage(PRIORITY)){
+                try {
+                    receivedMessage = queue.getMessage(PRIORITY);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                logger.info((String) receivedMessage.data());
+            }
+
+
             String line = reader.nextLine();
 
             String[] lineArray = line.split(" ");
