@@ -19,8 +19,8 @@ ElevatorEventTest.java               ElevatorTest.java
 ElevatorRequest.java                 FloorSubSystem.java
 ElevatorRequestTest.java             FloorSubSystemTest.java                         
 Message.java                         Logger.java
-MessageQueue.java                    Schedular.java  
-MessageQueueTest.java                SchedularTest.java
+MessageQueue.java                    Scheduler.java  
+MessageQueueTest.java                SchedulerTest.java
 MessageTest.java
 data.txt
 file.csv
@@ -37,11 +37,13 @@ Boma Iyaye
 -ElevatorRequest.Java
 -ElevatorRequestTest.java
 -Logger.java
+-UML Diagram
 Geoffery Koranteng
 -Message.java
 -MessageQueue.java
--Schedular.java
+-Scheduler.java
 -ElevatorSystem.java
+-ElevatorSubSystem.java
 Chibuzo Okpara
 -FloorSubSystem.java
 -FloorSubSystemTest.java
@@ -50,8 +52,10 @@ Ajayi, Tomisin
 -Logger.java
 -ElevatorEventTest.java
 -Sequence Diagram
+-Scheduler.java
 Eid, Saad
 -Elevator.java
 -ElevatorTest.java
+-ElevatorSubSystem.java
 
-copyrigths belong to SYSC 3303 Group 4 2023
+copyrights belong to SYSC 3303 Group 4 2023
