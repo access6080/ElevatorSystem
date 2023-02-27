@@ -7,6 +7,7 @@ import java.util.Queue;
  * which it saves in a job queue for when the elevator requests for a job.
  *
  * @author Geoffery Koranteng
+ * @author Oluwatomisin Ajayi
  * @version January 29th, 2023
  */
 public class Scheduler implements Runnable {
@@ -29,9 +30,6 @@ public class Scheduler implements Runnable {
     public static int SHUTDOWN = -1;
 
     private SchedulerState status;
-    public enum SchedulerEvent{
-        RequestingElevatorState,
-    }
 
     public enum SchedulerState{
         START, AWAITING_ELEVATOR_STATE, AWAITING_JOB_REQUEST, RECEIVING_FROM_FLOOR_SUBSYSTEM
