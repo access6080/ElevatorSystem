@@ -28,6 +28,14 @@ public class Scheduler implements Runnable {
     /** A constant tells the system a shut-down event being requested **/
     public static int SHUTDOWN = -1;
 
+    private SchedulerState status;
+    public enum SchedulerEvent{
+        RequestingElevatorState,
+    }
+
+    public enum SchedulerState{
+        START, AWAITING_ELEVATOR_STATE, AWAITING_JOB_REQUEST, RECEIVING_FROM_FLOOR_SUBSYSTEM
+    }
     /**
      * The constructor of the scheduler class.
      *
@@ -38,7 +46,9 @@ public class Scheduler implements Runnable {
         this.shutdown = false;
         this.jobQueue = new LinkedList<>();
         this.logger = new Logger();
+        this.status = SchedulerState.START;
     }
+
 
     /**
      * This method checks the message queue for messages sent to the scheduler.
@@ -48,37 +58,83 @@ public class Scheduler implements Runnable {
      * @throws InterruptedException thrown when the thread is interrupted
      */
     public void retrieveAndSchedule() throws InterruptedException {
-        Message newMessage = messageQueue.getMessage(PRIORITY);
+        if (messageQueue.hasAMessage(PRIORITY)) {
+            Message newMessage = messageQueue.getMessage(PRIORITY);
+            ElevatorSystemComponent sender = newMessage.sender();
+            Object data = newMessage.data();
 
-        if(newMessage == null) return;
+            if(sender.equals(ElevatorSystemComponent.FloorSubSystem) && !this.status.equals(SchedulerState.START))
+                this.status = SchedulerState.RECEIVING_FROM_FLOOR_SUBSYSTEM;
 
-        if(newMessage.sender().equals(ElevatorSystemComponent.FloorSubSystem)){
-            ElevatorEvent event = (ElevatorEvent) newMessage.data();
+            switch(status){
+                case START -> {
+                    if(sender.equals(ElevatorSystemComponent.FloorSubSystem)){
+                        scheduleJob((ElevatorEvent) data);
+                    } else if (sender.equals(ElevatorSystemComponent.ElevatorSubSystem)) {
+                        handleJobRequest(data);
+                    }
+                }
 
-            //Log Event
-            logger.info("Received a message from Floor Subsystem");
+                case AWAITING_ELEVATOR_STATE -> {
+                    if(sender.equals(ElevatorSystemComponent.ElevatorSubSystem)){
+                        boolean elevatorState = (boolean) data;
+                        if(elevatorState){
+                            ElevatorEvent job = jobQueue.poll();
+                            if(job == null) return;
+                            Message newJob = new Message(ElevatorSubsystem.PRIORITY,
+                                    ElevatorSystemComponent.Scheduler, job);
+                            messageQueue.addMessage(newJob);
+                        }
+                        this.status = SchedulerState.AWAITING_JOB_REQUEST;
+                    }
+                }
 
-            setShutDownFlag(event.time());
+                case AWAITING_JOB_REQUEST -> {
+                    if (sender.equals(ElevatorSystemComponent.ElevatorSubSystem)){
+                        handleJobRequest(data);
+                    }
+                }
 
-
-            jobQueue.add(event);
+                case RECEIVING_FROM_FLOOR_SUBSYSTEM -> {
+                    scheduleJob((ElevatorEvent) data);
+                }
+            }
         }
 
-        if(newMessage.sender().equals(ElevatorSystemComponent.Elevator)){
-            ElevatorRequest req = (ElevatorRequest) newMessage.data();
 
-            //Log Event
-            logger.info("Received a request from Elevator");
+    }
 
-            ElevatorEvent job = jobQueue.poll();
-            if(job == null) return;
+    private void handleJobRequest(Object data) {
+        ElevatorRequest req = (ElevatorRequest) data;
 
-            Message res = new Message(req.elevatorNum(), ElevatorSystemComponent.Scheduler, job);
-            messageQueue.addMessage(res);
+        //Log Event
+        logger.info("Received a request from Elevator");
 
-            //Log Event
-            logger.info("Sent a Job to the Elevator");
-        }
+        ElevatorEvent job = jobQueue.poll();
+        if(job == null) return;
+
+        Message res = new Message(req.elevatorNum(), ElevatorSystemComponent.Scheduler, job);
+        messageQueue.addMessage(res);
+
+        //Log Event
+        logger.info("Sent a Job to the Elevator");
+        this.status = SchedulerState.AWAITING_JOB_REQUEST;
+    }
+
+    private void scheduleJob(ElevatorEvent data) {
+        ElevatorEvent event = data;
+        logger.info("Received a message from Floor Subsystem");
+
+        jobQueue.add(event);
+
+        setShutDownFlag(event.time());
+
+        logger.info("Checking if Elevator is idle");
+        Message msg = new Message(ElevatorSubsystem.PRIORITY,
+                ElevatorSystemComponent.Scheduler, SchedulerEvent.RequestingElevatorState);
+        messageQueue.addMessage(msg);
+
+        this.status = SchedulerState.AWAITING_ELEVATOR_STATE;
     }
 
     /**
