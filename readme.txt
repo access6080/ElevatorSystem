@@ -12,7 +12,7 @@ The project developers can be contacted at
 Description: 
 This is a java object oriented model of the elevator systems in a building.It models the floor subsystem,Elevator Subsystem and schedular.
 
-This system comtains the following classes:
+This system contains the following classes:
 Elevator.java                        ElevatorSystem.java
 ElevatorEvent.java                   ElevatorSystemComponent.java
 ElevatorEventTest.java               ElevatorTest.java
@@ -23,7 +23,7 @@ MessageQueue.java                    Scheduler.java
 MessageQueueTest.java                SchedulerTest.java
 MessageTest.java
 data.txt
-file.csv
+
 
 Installation :
 Open the directory in eclipse.

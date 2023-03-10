@@ -1,5 +1,6 @@
 public enum ElevatorSystemComponent {
     Elevator,
     FloorSubSystem,
-    Scheduler
+    Scheduler,
+    ElevatorSubSystem
 }

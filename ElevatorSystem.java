@@ -12,16 +12,17 @@ public class ElevatorSystem {
 
         Thread schedulerThread = new Thread(new Scheduler(queue), "Scheduler");
         Thread floorSubSystemThread = new Thread(new FloorSubSystem(queue), "FloorSubsystem");
-        Thread elevatorThread = new Thread(new Elevator(1, 20, queue), "Elevator");
+        Thread elevatorSubSystemThread = new Thread(new ElevatorSubsystem(20, 1, queue),
+                "Elevator");
 
         logger.info("Starting Elevator System");
         schedulerThread.start();
         floorSubSystemThread.start();
-        elevatorThread.start();
+        elevatorSubSystemThread.start();
 
         schedulerThread.join();
         floorSubSystemThread.join();
-        elevatorThread.join();
+        elevatorSubSystemThread.join();
 
         logger.info("Elevator System Shutting Down");
     }

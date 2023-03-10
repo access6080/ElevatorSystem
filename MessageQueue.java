@@ -14,6 +14,9 @@ public class MessageQueue {
     /** The backing data structure of the Message queue class*/
     private final LinkedList<Message> elevatorlist;
     private final LinkedList<Message> schedulerList;
+    private final LinkedList<Message> floorsubsystemList;
+    private final LinkedList<Message> elevatorSubsystem;
+
 
     /**
      * Constructor of the MessageQueue class.
@@ -22,6 +25,8 @@ public class MessageQueue {
     public MessageQueue() {
         this.elevatorlist = new LinkedList<>();
         this.schedulerList = new LinkedList<>();
+        this.floorsubsystemList = new LinkedList<>();
+        this.elevatorSubsystem = new LinkedList<>();
     }
 
     /**
@@ -34,6 +39,14 @@ public class MessageQueue {
     public synchronized Message getMessage(int priority) throws InterruptedException {
         if(!isEmpty()) {
             if (priority == Scheduler.PRIORITY) {
+                return this.schedulerList.pollFirst();
+            }
+
+            if (priority == ElevatorSubsystem.PRIORITY) {
+                return this.schedulerList.pollFirst();
+            }
+
+            if (priority == FloorSubSystem.PRIORITY) {
                 return this.schedulerList.pollFirst();
             }
 
@@ -53,6 +66,9 @@ public class MessageQueue {
         if(m.priority() == Scheduler.PRIORITY) this.schedulerList.addLast(m);
 
         if(m.priority() > Scheduler.PRIORITY) this.elevatorlist.addLast(m);
+
+        if(m.priority() > FloorSubSystem.PRIORITY) this.elevatorlist.addLast(m);
+        if(m.priority() > ElevatorSubsystem.PRIORITY) this.elevatorlist.addLast(m);
     }
 
     /**
@@ -60,7 +76,7 @@ public class MessageQueue {
      * @return true if queue is empty and false otherwise.
      */
     private boolean isEmpty(){
-        return (elevatorlist.size() + schedulerList.size()) == 0;
+        return size() == 0;
     }
 
     /**
@@ -69,7 +85,7 @@ public class MessageQueue {
      * @return the size of the queue.
      */
     public synchronized int size(){
-        return (elevatorlist.size() + schedulerList.size());
+        return (elevatorlist.size() + schedulerList.size() + floorsubsystemList.size() + elevatorSubsystem.size());
     }
 
     /**
@@ -80,6 +96,8 @@ public class MessageQueue {
      */
     public boolean hasAMessage(int priority) {
         if(priority == Scheduler.PRIORITY) return schedulerList.size() != 0;
+        if(priority == FloorSubSystem.PRIORITY) return schedulerList.size() != 0;
+        if(priority == ElevatorSubsystem.PRIORITY) return schedulerList.size() != 0;
 
         if(priority > Scheduler.PRIORITY) return elevatorlist.size() != 0;
 

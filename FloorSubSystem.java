@@ -50,7 +50,8 @@ public class FloorSubSystem implements Runnable{
                     + floor + " requested floor " + button);
 
             ElevatorEvent event = new ElevatorEvent(time, floor, button);
-            Message msg = new Message(Scheduler.PRIORITY, ElevatorSystemComponent.FloorSubSystem, event);
+            Message msg = new Message(Scheduler.PRIORITY,
+                    ElevatorSystemComponent.FloorSubSystem, event, MessageType.Job);
             queue.addMessage(msg);
             logger.info("Data sent to Scheduler");
 

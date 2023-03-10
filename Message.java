@@ -8,4 +8,5 @@
  * @param sender the component responsible for creating the message and sending it through the message queue
  * @param data the payload of the message. This can be any object or data type.
  */
-public record Message(int priority, ElevatorSystemComponent sender, Object data) { }
+public record Message(int priority, ElevatorSystemComponent sender, Object data, MessageType type) { }
+

@@ -23,7 +23,7 @@ public class Scheduler implements Runnable {
     /** Logger for logging events **/
     private final Logger logger;
 
-    /** A flag that tells the scheduler to shutdown **/
+    /** A flag that tells the scheduler to shut down **/
     private boolean shutdown;
 
     /** A constant tells the system a shut-down event being requested **/
@@ -34,6 +34,11 @@ public class Scheduler implements Runnable {
     public enum SchedulerState{
         START, AWAITING_ELEVATOR_STATE, AWAITING_JOB_REQUEST, RECEIVING_FROM_FLOOR_SUBSYSTEM
     }
+
+    public enum SchedulerEvent{
+        RequestingElevatorState
+    }
+
     /**
      * The constructor of the scheduler class.
      *
@@ -80,7 +85,7 @@ public class Scheduler implements Runnable {
                             ElevatorEvent job = jobQueue.poll();
                             if(job == null) return;
                             Message newJob = new Message(ElevatorSubsystem.PRIORITY,
-                                    ElevatorSystemComponent.Scheduler, job);
+                                    ElevatorSystemComponent.Scheduler, job, MessageType.Job);
                             messageQueue.addMessage(newJob);
                         }
                         this.status = SchedulerState.AWAITING_JOB_REQUEST;
@@ -93,9 +98,7 @@ public class Scheduler implements Runnable {
                     }
                 }
 
-                case RECEIVING_FROM_FLOOR_SUBSYSTEM -> {
-                    scheduleJob((ElevatorEvent) data);
-                }
+                case RECEIVING_FROM_FLOOR_SUBSYSTEM -> scheduleJob((ElevatorEvent) data);
             }
         }
 
@@ -111,7 +114,7 @@ public class Scheduler implements Runnable {
         ElevatorEvent job = jobQueue.poll();
         if(job == null) return;
 
-        Message res = new Message(req.elevatorNum(), ElevatorSystemComponent.Scheduler, job);
+        Message res = new Message(req.elevatorNum(), ElevatorSystemComponent.Scheduler, job, MessageType.Job);
         messageQueue.addMessage(res);
 
         //Log Event
@@ -120,16 +123,16 @@ public class Scheduler implements Runnable {
     }
 
     private void scheduleJob(ElevatorEvent data) {
-        ElevatorEvent event = data;
         logger.info("Received a message from Floor Subsystem");
 
-        jobQueue.add(event);
+        jobQueue.add(data);
 
-        setShutDownFlag(event.time());
+        setShutDownFlag(data.time());
 
         logger.info("Checking if Elevator is idle");
         Message msg = new Message(ElevatorSubsystem.PRIORITY,
-                ElevatorSystemComponent.Scheduler, SchedulerEvent.RequestingElevatorState);
+                ElevatorSystemComponent.Scheduler,
+                SchedulerEvent.RequestingElevatorState, MessageType.Function_Request);
         messageQueue.addMessage(msg);
 
         this.status = SchedulerState.AWAITING_ELEVATOR_STATE;
@@ -143,7 +146,8 @@ public class Scheduler implements Runnable {
         if(this.shutdown && jobQueue.isEmpty() && !messageQueue.hasAMessage(Scheduler.PRIORITY)) {
             logger.info("Shutting Down");
 
-            this.messageQueue.addMessage(new Message(SHUTDOWN, ElevatorSystemComponent.Scheduler, null));
+            this.messageQueue.addMessage(new Message(SHUTDOWN,
+                    ElevatorSystemComponent.Scheduler, null, MessageType.Shutdown));
             Thread.currentThread().interrupt();
         }
     }
