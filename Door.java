@@ -13,17 +13,31 @@ public class Door {
         this.status = DoorState.CLOSED;
     }
 
+    /**
+     * This method gets the current status of the door.
+     * @return status
+     */
     public DoorState getStatus(){
         return status;
     }
 
+    /**
+     * This method sets the status of the door to OPEN.
+     */
     public void openDoor(){
         status = DoorState.OPEN;
     }
 
+    /**
+     * This method sets the status of the door to CLOSED.
+     */
     public void closeDoor(){
         status = DoorState.CLOSED;
     }
+
+    /**
+     * This method sets the status of the door to MOVING.
+     */
     public void doorMoving(){
         status = DoorState.MOVING;
     }
