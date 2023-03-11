@@ -28,22 +28,12 @@ public class FloorSubSystem implements Runnable{
         Scanner reader = new Scanner(file);
         reader.nextLine();
         while(reader.hasNextLine()){
-            Message receivedMessage;
-            if(queue.hasAMessage(PRIORITY)){
-                try {
-                    receivedMessage = queue.getMessage(PRIORITY);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                logger.info((String) receivedMessage.data());
-            }
-
 
             String line = reader.nextLine();
 
             String[] lineArray = line.split(" ");
 
-            int time = Integer.parseInt(lineArray[0]);
+            String time = lineArray[0];
             int floor = Integer.parseInt(lineArray[1]);
             int button = Integer.parseInt(lineArray[2]);
             logger.info("Received event request with time " + time + " requesting floor "
@@ -63,11 +53,11 @@ public class FloorSubSystem implements Runnable{
      * This method tells  the system to shuts down or keep operating.
      * @param token a token that tells the system to shut down
      */
-    private void continueOrShutDown(int token) {
-        if(token == Scheduler.SHUTDOWN) {
-            logger.info("Shutting Down");
-            Thread.currentThread().interrupt();
-        }
+    private void continueOrShutDown(String token) {
+//        if(token == Scheduler.SHUTDOWN) {
+//            logger.info("Shutting Down");
+//            Thread.currentThread().interrupt();
+//        }
     }
 
     /**
@@ -77,13 +67,26 @@ public class FloorSubSystem implements Runnable{
     @Override
     public void run() {
         logger.info("Floor Subsystem Started");
+        try {
+            getData("data.txt");
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
         while(Thread.currentThread().isAlive()){
-            if(Thread.currentThread().isInterrupted()) break;
+            receiveMessages();
+        }
+    }
+
+    private void receiveMessages() {
+        Message receivedMessage;
+        if(queue.hasAMessage(PRIORITY)){
             try {
-                getData("data.txt");
-            } catch (FileNotFoundException e) {
+                receivedMessage = queue.getMessage(PRIORITY);
+            } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+            logger.info((String) receivedMessage.data());
         }
     }
 }

@@ -8,7 +8,6 @@ import java.util.ArrayList;
  * @version January 31st, 2023
  */
 public class Elevator extends Thread{
-
 	private static final int IDLE = 0;
 	private static final int UP = 1;
 	private static final int DOWN = 2;
@@ -40,7 +39,7 @@ public class Elevator extends Thread{
 		this.queue = queue;
 		this.logger = new Logger();
 		this.shutdown = false;
-		this.isIdle = false;
+		this.isIdle = true;
 
 	}
 	
@@ -149,12 +148,25 @@ public class Elevator extends Thread{
 		}
 	}
 
+	public int getElevatorNum() {
+		return elevatorNum;
+	}
+
 	/**
 	 * This method executes a job scheduled by the Scheduler component
 	 */
 	public void executeJob() throws InterruptedException {
 		if(this.queue.hasAMessage(elevatorNum)) {
 			Message msg = this.queue.getMessage(elevatorNum);
+
+			if(msg.type().equals(MessageType.Function_Request)){
+				Message response = new Message(ElevatorSubsystem.PRIORITY, ElevatorSystemComponent.Elevator,
+						isIdle(), MessageType.Function_Response);
+				this.queue.addMessage(response);
+				logger.info("Responding to function request -> isIdle()");
+				return;
+			}
+
 			ElevatorEvent job = (ElevatorEvent) msg.data();
 
 			int movingTo = job.button();

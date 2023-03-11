@@ -1,6 +1,3 @@
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * The Elevator Subsystem controls the elevator.
  *
@@ -8,9 +5,8 @@ import java.util.Map;
  * @author Geoffery Koranteng
  */
 public class ElevatorSubsystem implements Runnable {
-    private final Map<Integer, Elevator> elevatorList;
-    private final int numElevators;
-    private final  int numFloors;
+//    private final Map<Integer, Elevator> elevatorList;
+    private final Elevator elevator;
     private final MessageQueue queue;
     private final Logger logger;
     public static final int PRIORITY = -2;
@@ -19,6 +15,7 @@ public class ElevatorSubsystem implements Runnable {
         Start,
         Checking_Elevator_Status,
         Sending_Elevator_New_Job,
+        Awaiting_Elevator_Response,
         StandBy
     }
 
@@ -27,17 +24,17 @@ public class ElevatorSubsystem implements Runnable {
      * @param numElevators the number of elevators in the system
      */
     public ElevatorSubsystem(int numFloors, int numElevators, MessageQueue queue) {
-        this.elevatorList = new HashMap<>();
+        this.elevator = new Elevator(1, numFloors, queue);
         this.status = ElevatorSubsystemState.Start;
-        this.numElevators = numElevators;
         this.queue = queue;
-        this.numFloors = numFloors;
         this.logger = new Logger();
     }
 
     private void subsystemOperation() throws InterruptedException {
         ElevatorEvent new_job = null;
-        if(this.queue.hasAMessage(PRIORITY)){
+        boolean isIdle = false;
+        boolean hasMessage = this.queue.hasAMessage(PRIORITY);
+        if(hasMessage){
             Message msg = this.queue.getMessage(PRIORITY);
 
             if(msg.type() == MessageType.Function_Request){
@@ -48,15 +45,29 @@ public class ElevatorSubsystem implements Runnable {
                 this.status = ElevatorSubsystemState.Sending_Elevator_New_Job;
                 new_job = (ElevatorEvent) msg.data();
             }
+
+            if(msg.type() ==  MessageType.Function_Response){
+                this.status = ElevatorSubsystemState.Awaiting_Elevator_Response;
+                isIdle = (boolean) msg.data();
+            }
         }
 
         switch (this.status){
             case Start -> startup();
             case Checking_Elevator_Status -> checkElevatorStatus();
             case Sending_Elevator_New_Job -> dispatchNewJob(new_job);
+            case Awaiting_Elevator_Response -> RespondToFunctionRequest(isIdle);
         }
     }
 
+    private void RespondToFunctionRequest(boolean isIdle) {
+        Message msg = new Message(Scheduler.PRIORITY, ElevatorSystemComponent.ElevatorSubSystem,
+                isIdle, MessageType.Function_Response);
+
+        this.queue.addMessage(msg);
+        logger.info("Responding to Scheduler Request");
+        this.status = ElevatorSubsystemState.StandBy;
+    }
 
 
     @Override
@@ -71,10 +82,9 @@ public class ElevatorSubsystem implements Runnable {
     }
 
     private void startup() {
-        //Initialize the elevators
-        for (int i = 1; i < numElevators + 1; i ++) {
-            this.elevatorList.put(i, new Elevator(i, numFloors, this.queue));
-        }
+        //Start the elevators
+        Thread elevatorThread = new Thread(this.elevator, "Elevator 1");
+        elevatorThread.start();
 
         this.status = ElevatorSubsystemState.StandBy;
     }
@@ -83,15 +93,14 @@ public class ElevatorSubsystem implements Runnable {
         Message msg = new Message(1, ElevatorSystemComponent.ElevatorSubSystem, job, MessageType.Job);
         logger.info("Sending a new Job to Elevator " + 1);
         this.queue.addMessage(msg);
+        this.status = ElevatorSubsystemState.StandBy;
     }
 
     private void checkElevatorStatus() {
         logger.info("Checking the status of the elevator");
-        boolean isIdle = elevatorList.get(1).isIdle();
 
-        Message msg = new Message(Scheduler.PRIORITY,
-                ElevatorSystemComponent.ElevatorSubSystem, isIdle, MessageType.Function_Request);
-        logger.info("Sending Elevator Status to the Scheduler");
+        Message msg = new Message(this.elevator.getElevatorNum(),
+                ElevatorSystemComponent.ElevatorSubSystem, null, MessageType.Function_Request);
         this.queue.addMessage(msg);
         this.status = ElevatorSubsystemState.StandBy;
     }

@@ -10,17 +10,17 @@ public class ElevatorSystem {
         MessageQueue queue = new MessageQueue();
         Logger logger = new Logger();
 
-        Thread schedulerThread = new Thread(new Scheduler(queue), "Scheduler");
+//        Thread schedulerThread = new Thread(new Scheduler(queue), "Scheduler");
         Thread floorSubSystemThread = new Thread(new FloorSubSystem(queue), "FloorSubsystem");
         Thread elevatorSubSystemThread = new Thread(new ElevatorSubsystem(20, 1, queue),
-                "Elevator");
+                "ElevatorSubSystem");
 
         logger.info("Starting Elevator System");
-        schedulerThread.start();
+//        schedulerThread.start();
         floorSubSystemThread.start();
         elevatorSubSystemThread.start();
 
-        schedulerThread.join();
+//        schedulerThread.join();
         floorSubSystemThread.join();
         elevatorSubSystemThread.join();
 

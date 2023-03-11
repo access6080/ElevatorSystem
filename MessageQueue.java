@@ -15,7 +15,7 @@ public class MessageQueue {
     private final LinkedList<Message> elevatorlist;
     private final LinkedList<Message> schedulerList;
     private final LinkedList<Message> floorsubsystemList;
-    private final LinkedList<Message> elevatorSubsystem;
+    private final LinkedList<Message> elevatorSubsystemList;
 
 
     /**
@@ -26,7 +26,7 @@ public class MessageQueue {
         this.elevatorlist = new LinkedList<>();
         this.schedulerList = new LinkedList<>();
         this.floorsubsystemList = new LinkedList<>();
-        this.elevatorSubsystem = new LinkedList<>();
+        this.elevatorSubsystemList = new LinkedList<>();
     }
 
     /**
@@ -43,11 +43,11 @@ public class MessageQueue {
             }
 
             if (priority == ElevatorSubsystem.PRIORITY) {
-                return this.schedulerList.pollFirst();
+                return this.elevatorSubsystemList.pollFirst();
             }
 
             if (priority == FloorSubSystem.PRIORITY) {
-                return this.schedulerList.pollFirst();
+                return this.floorsubsystemList.pollFirst();
             }
 
             if (priority > Scheduler.PRIORITY) {
@@ -67,8 +67,8 @@ public class MessageQueue {
 
         if(m.priority() > Scheduler.PRIORITY) this.elevatorlist.addLast(m);
 
-        if(m.priority() > FloorSubSystem.PRIORITY) this.elevatorlist.addLast(m);
-        if(m.priority() > ElevatorSubsystem.PRIORITY) this.elevatorlist.addLast(m);
+        if(m.priority() == FloorSubSystem.PRIORITY) this.floorsubsystemList.addLast(m);
+        if(m.priority() == ElevatorSubsystem.PRIORITY) this.elevatorSubsystemList.addLast(m);
     }
 
     /**
@@ -85,7 +85,7 @@ public class MessageQueue {
      * @return the size of the queue.
      */
     public synchronized int size(){
-        return (elevatorlist.size() + schedulerList.size() + floorsubsystemList.size() + elevatorSubsystem.size());
+        return (elevatorlist.size() + schedulerList.size() + floorsubsystemList.size() + elevatorSubsystemList.size());
     }
 
     /**
@@ -96,8 +96,8 @@ public class MessageQueue {
      */
     public boolean hasAMessage(int priority) {
         if(priority == Scheduler.PRIORITY) return schedulerList.size() != 0;
-        if(priority == FloorSubSystem.PRIORITY) return schedulerList.size() != 0;
-        if(priority == ElevatorSubsystem.PRIORITY) return schedulerList.size() != 0;
+        if(priority == FloorSubSystem.PRIORITY) return floorsubsystemList.size() != 0;
+        if(priority == ElevatorSubsystem.PRIORITY) return elevatorSubsystemList.size() != 0;
 
         if(priority > Scheduler.PRIORITY) return elevatorlist.size() != 0;
 

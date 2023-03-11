@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * This class which handles the logging of the ElevatorSystem.
@@ -52,11 +53,14 @@ public class Logger {
         StringBuilder log = new StringBuilder();
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
-//         log.append("[").append(Thread.currentThread().getName()).append("] ")
-//                 .append(dtf.format(now)).append(level).append(message);
-        log.append("[Time: ").append(dtf.format(now)).append("] [ELEVATOR] [Class: ")
-                .append(Thread.currentThread().getName()).append("] [").append(level).
-                append("] ").append(message);
+
+        String threadName = Thread.currentThread().getName();
+        String className = Thread.currentThread().getStackTrace()[3].getClassName();
+
+        log.append("[Time: ").append(dtf.format(now)).append("] ").append(threadName)
+                .append(" [Class: ")
+                .append(className).append("] [")
+                .append(level).append("] ").append(message);
         return log;
     }
 

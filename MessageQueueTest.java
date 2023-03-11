@@ -25,7 +25,7 @@ public class MessageQueueTest {
      */
     @Test
     public void testAddMessage() {
-        this.queue.addMessage(new Message(0, ElevatorSystemComponent.Scheduler, "Hello World"));
+        this.queue.addMessage(new Message(0, ElevatorSystemComponent.Scheduler, "Hello World", null));
 
         assertEquals(1, this.queue.size());
     }
@@ -35,7 +35,7 @@ public class MessageQueueTest {
      */
     @Test
     public void testGetMessage() {
-        this.queue.addMessage(new Message(0, ElevatorSystemComponent.Scheduler, "Hello World"));
+        this.queue.addMessage(new Message(0, ElevatorSystemComponent.Scheduler, "Hello World", null));
 
         assertEquals(1, this.queue.size());
 
@@ -61,7 +61,7 @@ public class MessageQueueTest {
      */
     @Test
     public void testSize(){
-        this.queue.addMessage(new Message(0, ElevatorSystemComponent.Scheduler, "Hello World"));
+        this.queue.addMessage(new Message(0, ElevatorSystemComponent.Scheduler, "Hello World", null));
 
         assertEquals(1, this.queue.size());
     }

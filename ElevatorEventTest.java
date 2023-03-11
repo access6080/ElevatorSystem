@@ -17,7 +17,7 @@ public class ElevatorEventTest {
      */
     @Before
     public void setUp(){
-        this.event = new ElevatorEvent(120,5,3);
+        this.event = new ElevatorEvent("120",5,3);
     }
 
     /**

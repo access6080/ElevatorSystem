@@ -17,7 +17,7 @@ public class MessageTest {
      */
     @Before
     public void setUp() {
-        this.m = new Message(0, ElevatorSystemComponent.FloorSubSystem, "Hello World");
+        this.m = new Message(0, ElevatorSystemComponent.FloorSubSystem, "Hello World", null);
     }
 
     /**

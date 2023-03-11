@@ -1,3 +1,5 @@
+import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -10,9 +12,11 @@ import java.util.Queue;
  * @author Oluwatomisin Ajayi
  * @version January 29th, 2023
  */
-public class Scheduler implements Runnable {
+public class Scheduler {
     /** The message queue through which the scheduler receives and sends messages */
     private final MessageQueue messageQueue;
+
+    private DatagramSocket sendReceiveSocket;
 
     /** The priority of the scheduler */
     public static final int PRIORITY = 0;
@@ -43,6 +47,7 @@ public class Scheduler implements Runnable {
      * The constructor of the scheduler class.
      *
      * @param queue the message queue for sending and receiving messages.
+     * @deprecated Use new constructor.
      */
     public Scheduler(MessageQueue queue) {
         this.messageQueue = queue;
@@ -52,6 +57,18 @@ public class Scheduler implements Runnable {
         this.status = SchedulerState.START;
     }
 
+    public Scheduler() {
+        this.messageQueue = new MessageQueue();
+        this.shutdown = false;
+        this.jobQueue = new LinkedList<>();
+        this.logger = new Logger();
+        this.status = SchedulerState.START;
+        try {
+            this.sendReceiveSocket = new DatagramSocket(3002);
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * This method checks the message queue for messages sent to the scheduler.
@@ -65,9 +82,13 @@ public class Scheduler implements Runnable {
             Message newMessage = messageQueue.getMessage(PRIORITY);
             ElevatorSystemComponent sender = newMessage.sender();
             Object data = newMessage.data();
+            MessageType type = newMessage.type();
 
             if(sender.equals(ElevatorSystemComponent.FloorSubSystem) && !this.status.equals(SchedulerState.START))
                 this.status = SchedulerState.RECEIVING_FROM_FLOOR_SUBSYSTEM;
+
+            if(sender.equals(ElevatorSystemComponent.ElevatorSubSystem) && type == MessageType.Function_Response)
+               this.status = SchedulerState.AWAITING_ELEVATOR_STATE;
 
             switch(status){
                 case START -> {
@@ -80,15 +101,7 @@ public class Scheduler implements Runnable {
 
                 case AWAITING_ELEVATOR_STATE -> {
                     if(sender.equals(ElevatorSystemComponent.ElevatorSubSystem)){
-                        boolean elevatorState = (boolean) data;
-                        if(elevatorState){
-                            ElevatorEvent job = jobQueue.poll();
-                            if(job == null) return;
-                            Message newJob = new Message(ElevatorSubsystem.PRIORITY,
-                                    ElevatorSystemComponent.Scheduler, job, MessageType.Job);
-                            messageQueue.addMessage(newJob);
-                        }
-                        this.status = SchedulerState.AWAITING_JOB_REQUEST;
+                        handleFunctionResponse((boolean) data);
                     }
                 }
 
@@ -103,6 +116,18 @@ public class Scheduler implements Runnable {
         }
 
 
+    }
+
+    private void handleFunctionResponse(boolean data) {
+        logger.info("Received Elevator Status");
+        if(data){
+            ElevatorEvent job = jobQueue.poll();
+            if(job == null) return;
+            Message newJob = new Message(ElevatorSubsystem.PRIORITY,
+                    ElevatorSystemComponent.Scheduler, job, MessageType.Job);
+            messageQueue.addMessage(newJob);
+        }
+        this.status = SchedulerState.AWAITING_JOB_REQUEST;
     }
 
     private void handleJobRequest(Object data) {
@@ -127,7 +152,11 @@ public class Scheduler implements Runnable {
 
         jobQueue.add(data);
 
-        setShutDownFlag(data.time());
+        Message newMsg = new Message(FloorSubSystem.PRIORITY, ElevatorSystemComponent.Scheduler,
+                "Scheduler received Job", null);
+        this.messageQueue.addMessage(newMsg);
+
+//        setShutDownFlag(data.time());
 
         logger.info("Checking if Elevator is idle");
         Message msg = new Message(ElevatorSubsystem.PRIORITY,
@@ -163,7 +192,6 @@ public class Scheduler implements Runnable {
      * This method is implemented from the runnable interface
      * and allows this class to be run by a thread instance.
      */
-    @Override
     public void run() {
         logger.info("Scheduler Service Started");
         while(Thread.currentThread().isAlive()){
@@ -176,5 +204,9 @@ public class Scheduler implements Runnable {
             }
             continueOrShutDown();
         }
+    }
+
+    public static void main(String[] args) {
+        Scheduler scheduler = new Scheduler();
     }
 }

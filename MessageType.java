@@ -1,5 +1,6 @@
 public enum MessageType {
         Job,
         Function_Request,
-        Shutdown
+        Shutdown,
+        Function_Response
 }

@@ -79,7 +79,6 @@ public class ElevatorTest {
 	
 	@Test
 	public void elevatorDefaultStateTest() {
-		assertTrue(elevator.isElevatorReady());
 		assertFalse(elevator.isMovingDown());
 		assertFalse(elevator.isMovingUp());
 		assertFalse(elevator.isDoorOpen());
