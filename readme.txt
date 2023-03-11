@@ -21,8 +21,8 @@ ElevatorRequestTest.java             FloorSubSystemTest.java
 Message.java                         Logger.java
 MessageQueue.java                    Scheduler.java  
 MessageQueueTest.java                SchedulerTest.java
-MessageTest.java
-data.txt
+MessageTest.java                     Motor.java
+data.txt                             ElevatorDoor.java
 
 
 Installation :
@@ -38,6 +38,7 @@ Boma Iyaye
 -ElevatorRequestTest.java
 -Logger.java
 -UML Diagram
+-Scheduler State Diagram
 Geoffery Koranteng
 -Message.java
 -MessageQueue.java
@@ -47,6 +48,8 @@ Geoffery Koranteng
 Chibuzo Okpara
 -FloorSubSystem.java
 -FloorSubSystemTest.java
+-Motor.java
+-elevatorSubSystem State Diagram
 Ajayi, Tomisin
 -ElevatorEvent.java
 -Logger.java
