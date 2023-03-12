@@ -22,7 +22,9 @@ Message.java                         Logger.java
 MessageQueue.java                    Scheduler.java  
 MessageQueueTest.java                SchedulerTest.java
 MessageTest.java                     Motor.java
-data.txt                             ElevatorDoor.java
+data.txt                             Door.java
+ArrivalSensor.java                   Lamp.java
+MessageService.java                  MessageType.java
 
 
 Installation :
@@ -39,12 +41,16 @@ Boma Iyaye
 -Logger.java
 -UML Diagram
 -Scheduler State Diagram
+-Lamp.java
 Geoffery Koranteng
 -Message.java
 -MessageQueue.java
 -Scheduler.java
 -ElevatorSystem.java
 -ElevatorSubSystem.java
+-ArrivalSensor.java
+-MessageService.java
+-MessageType.java
 Chibuzo Okpara
 -FloorSubSystem.java
 -FloorSubSystemTest.java
@@ -56,6 +62,7 @@ Ajayi, Tomisin
 -ElevatorEventTest.java
 -Sequence Diagram
 -Scheduler.java
+-Door.java
 Eid, Saad
 -Elevator.java
 -ElevatorTest.java
