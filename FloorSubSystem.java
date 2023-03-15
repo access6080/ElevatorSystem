@@ -1,4 +1,6 @@
 import java.io.*;
+import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.util.Scanner;
 
 /**
@@ -6,16 +8,30 @@ import java.util.Scanner;
  * the class stores all the data then creates and adds a message to the queue delivered to the scheduler
  * @author Chibuzo Okpara
  * @author Geoffery koranteng
+ * @author Boma Iyaye
  * @version January 29th, 2023
  */
-public class FloorSubSystem implements Runnable{
+public class FloorSubSystem{
 
     private final MessageQueue queue;
     private final Logger logger;
     public static int PRIORITY = -1;
+    private final MessageService service;
+    DatagramSocket sendAndReceive;
+
     public FloorSubSystem(MessageQueue queue){
         this.queue = queue;
         this.logger = new Logger();
+    }
+    public FloorSubSystem() {
+        this.queue = queue;
+        this.logger = new Logger();
+        try {
+            sendAndReceive =new DatagramSocket(3001);
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        }
+        this.service= new MessageService(sendAndReceive);
     }
 
     /**
@@ -28,12 +44,22 @@ public class FloorSubSystem implements Runnable{
         Scanner reader = new Scanner(file);
         reader.nextLine();
         while(reader.hasNextLine()){
+            Message receivedMessage;
+            if(queue.hasAMessage(PRIORITY)){
+                try {
+                    receivedMessage = queue.getMessage(PRIORITY);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                logger.info((String) receivedMessage.data());
+            }
+
 
             String line = reader.nextLine();
 
             String[] lineArray = line.split(" ");
 
-            String time = lineArray[0];
+            int time = Integer.parseInt(lineArray[0]);
             int floor = Integer.parseInt(lineArray[1]);
             int button = Integer.parseInt(lineArray[2]);
             logger.info("Received event request with time " + time + " requesting floor "
@@ -42,7 +68,7 @@ public class FloorSubSystem implements Runnable{
             ElevatorEvent event = new ElevatorEvent(time, floor, button);
             Message msg = new Message(Scheduler.PRIORITY,
                     ElevatorSystemComponent.FloorSubSystem, event, MessageType.Job);
-            queue.addMessage(msg);
+            service.send(msg);
             logger.info("Data sent to Scheduler");
 
             continueOrShutDown(time);
@@ -53,11 +79,11 @@ public class FloorSubSystem implements Runnable{
      * This method tells  the system to shuts down or keep operating.
      * @param token a token that tells the system to shut down
      */
-    private void continueOrShutDown(String token) {
-//        if(token == Scheduler.SHUTDOWN) {
-//            logger.info("Shutting Down");
-//            Thread.currentThread().interrupt();
-//        }
+    private void continueOrShutDown(int token) {
+        if(token == Scheduler.SHUTDOWN) {
+            logger.info("Shutting Down");
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**
@@ -67,26 +93,19 @@ public class FloorSubSystem implements Runnable{
     @Override
     public void run() {
         logger.info("Floor Subsystem Started");
-        try {
-            getData("data.txt");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
         while(Thread.currentThread().isAlive()){
-            receiveMessages();
+            if(Thread.currentThread().isInterrupted()) break;
+            try {
+                getData("data.txt");
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
-    private void receiveMessages() {
-        Message receivedMessage;
-        if(queue.hasAMessage(PRIORITY)){
-            try {
-                receivedMessage = queue.getMessage(PRIORITY);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            logger.info((String) receivedMessage.data());
-        }
+    public static void main(String[] args) {
+
+        messaging = new MessageService();
+        FloorSubSystem FS = new FloorSubSystem(messaging);
     }
 }
