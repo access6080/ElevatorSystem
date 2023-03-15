@@ -23,6 +23,8 @@ public class Elevator extends Thread{
 	private final Logger logger;
 	private boolean shutdown;
 	private boolean isIdle;
+	//The time to move one floor in the elevator. 
+	private static final TIMETOMOVE = 1000; //TODO: The 1000 is used as a place holder for now.
 		
 	/**
 	 *  Constructor of the elevator class.
@@ -177,11 +179,16 @@ public class Elevator extends Thread{
 				this.currentDirection = UP;
 			}
 
+			//Computing the time to move between floors
+			double waitTime = TIMETOMOVE * Math.abs(this.currFloor - movingTo);
+			
 			this.isIdle = false;
 			if (Math.max(this.currFloor, movingTo) == movingTo) {
 				logger.info("Currently on floor " + currFloor + ", moving up.");
+				Thread.sleep(waitTime); //waiting to move between floors
 			} else {
 				logger.info("Currently on floor " + currFloor + ", moving down.");
+				Thread.sleep(waitTime); //waiting to move between floors
 			}
 			this.currFloor = movingTo;
 
@@ -251,16 +258,6 @@ public class Elevator extends Thread{
 			Thread.currentThread().interrupt();
 		}
 	}
-
-
-	
-	/**
-	 * This implementation of the ElevatorSubsystem Class
-	 * Receives packets from the Scheduler and forwards them to the corresponding elevator
-	 * RECEIVES ONLY, sending is handled by each respective elevator
-	 * 
-	 * @author Saad Eid
-	 *
 	
 	/**
 	 * This method is implemented from the runnable interface
