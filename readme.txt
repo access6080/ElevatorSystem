@@ -56,6 +56,7 @@ Chibuzo Okpara
 -FloorSubSystemTest.java
 -Motor.java
 -elevatorSubSystem State Diagram
+-elevator state diagram
 Ajayi, Tomisin
 -ElevatorEvent.java
 -Logger.java
