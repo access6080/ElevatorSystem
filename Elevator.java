@@ -1,102 +1,87 @@
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 
 /**
  * The Elevator class models the elevator component.
- * 
+ *
  * @author Saad Eid
  * @author Geoffery Koranteng
  * @version January 31st, 2023
  */
-public class Elevator extends Thread{
-	private static final int IDLE = 0;
-	private static final int UP = 1;
-	private static final int DOWN = 2;
+public class Elevator implements Runnable {
 	private final int elevatorNum;
+	private final Door doors;
+	private final Motor motor;
+	private final Lamp elevatorLamp;
 	private int currFloor;
-	private final int numFloors;
-	private int currentDirection;		
+	private ElevatorEvent currentJob;
+	private int finalDestination;
 	private boolean movingUp;
 	private boolean movingDown;
-	private boolean doorOpen;
+	private boolean servicing;
 	private final MessageQueue queue;
+	private final LinkedList<ElevatorEvent> jobQueue;
 	private final ArrayList<Integer> reqFloors;
 	private final Logger logger;
-	private boolean shutdown;
+	private ElevatorState status;
 	private boolean isIdle;
-	//The time to move one floor in the elevator. 
-	private static final TIMETOMOVE = 1000; //TODO: The 1000 is used as a place holder for now.
-		
+	private final ArrivalSensor sensor;
+	private enum ElevatorState {
+		Start,
+		Servicing_Request,
+		StandBy
+	}
+
+	//The time to move one floor in the elevator.
+	private static final int TIMETOMOVE = 1000; //TODO: The 1000 is used as a place holder for now.
+
 	/**
 	 *  Constructor of the elevator class.
 	 *  Instantiates the data structure - arraylist and message queue
 	 */
-	public Elevator (int elevatorNum, int numFloors, MessageQueue queue) {
+	public Elevator (int elevatorNum, MessageQueue queue) {
 		this.elevatorNum = elevatorNum;
-		this.numFloors = numFloors;
 		this.movingUp = false;
 		this.movingDown = false;
-		this.doorOpen = false;
 		this.currFloor = 1;
+		this.jobQueue = new LinkedList<>();
 		this.reqFloors = new ArrayList<>();
 		this.queue = queue;
 		this.logger = new Logger();
-		this.shutdown = false;
 		this.isIdle = true;
-
+		this.doors = new Door();
+		this.status = ElevatorState.Start;
+		this.sensor = new ArrivalSensor();
+		this.servicing = false;
+		this.motor = new Motor();
+		this.elevatorLamp = new Lamp();
 	}
-	
+
 	/**
 	 * This method returns the current floor
-	 * 
+	 *
 	 * @return the current floor of the elevator
 	 */
 	public int getCurrFloor() {
 		return this.currFloor;
 	}
-	
-	/**
-	 * This method returns the current floor
-	 * 
-	 * @return the reqFloor arraylist
-	 */
-	public ArrayList<Integer> getReqFloors() {
-		return this.reqFloors;
-	}
-	
-	/**
-	 * This method moves the elevator up.
-	 */
-	public void moveUp() {
-		logger.info("Now moving up.");
-		movingUp = true;
-		movingDown = false;
-		currentDirection = UP;
-	}
-	
+
 	/**
 	 * This method returns whether if the elevator is moving up.
 	 */
 	public boolean isMovingUp() {
 		return this.movingUp;
 	}
-	
-	/**
-	 * This method moves the elevator down.
-	 */
-	public void moveDown() {
-		logger.info("Now moving down.");
-		movingUp = false;
-		movingDown = true;
-		currentDirection = DOWN;
-	}
-	
+
+
 	/**
 	 * This method returns whether if the elevator is moving up.
 	 */
 	public boolean isMovingDown() {
 		return this.movingDown;
 	}
-	
+
 	/**
 	 * This method stops the elevator.
 	 */
@@ -104,179 +89,137 @@ public class Elevator extends Thread{
 		logger.info("The elevator is stopping.");
 		movingUp = false;
 		movingDown = false;
-		currentDirection = IDLE;
 		logger.info("The elevator is stopped.");
 	}
-	
+
 	/**
 	 * This method returns whether if the elevator is at idle.
 	 */
 	public boolean isIdle() {
 		return isIdle;
 	}
-	
-	/**
-	 * This method adds the floor number into required floor list.
-	 */
-	public void chooseFloor(int floorNum) {
-		if (!reqFloors.contains(floorNum)){
-			this.reqFloors.add(floorNum);
-		}		
-	}
-
-	/**
-	 * This method moves the elevator up by one floor.
-	 */
-	public void moveOneFloor() {
-		switch (currentDirection) {
-			case UP -> {
-				if (currFloor != reqFloors.get(0)) {
-					currFloor++;
-				}
-				if (currFloor > numFloors) {
-					currFloor = numFloors;
-				}
-				logger.info("Currently on floor " + currFloor + ", moving up.");
-			}
-			case DOWN -> {
-				if (currFloor != reqFloors.get(0)) {
-					currFloor--;
-				}
-				if (currFloor <= 0) {
-					currFloor = 1;
-				}
-				logger.info("Currently on floor " + currFloor + ", moving down.");
-			}
-		}
-	}
 
 	public int getElevatorNum() {
 		return elevatorNum;
+	}
+
+	public void elevatorOperation() throws InterruptedException {
+		switch (status){
+			case Start, StandBy -> checkForJob();
+			case Servicing_Request -> executeJob();
+		}
+	}
+
+	/**
+	 * Checks if the elevator has received a new job
+	 */
+	private void checkForJob() {
+		if(this.queue.hasAMessage(elevatorNum)) {
+			try {
+				Message msg = this.queue.getMessage(elevatorNum);
+				ElevatorEvent job = (ElevatorEvent) msg.data();
+				this.jobQueue.add(job);
+				this.reqFloors.add(job.carButton());
+
+				this.status = ElevatorState.Servicing_Request;
+				return;
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		this.status = ElevatorState.StandBy;
 	}
 
 	/**
 	 * This method executes a job scheduled by the Scheduler component
 	 */
 	public void executeJob() throws InterruptedException {
-		if(this.queue.hasAMessage(elevatorNum)) {
-			Message msg = this.queue.getMessage(elevatorNum);
+			if(!servicing) {
+				this.currentJob = jobQueue.poll();
+				if(currentJob == null) return;
 
-			if(msg.type().equals(MessageType.Function_Request)){
-				Message response = new Message(ElevatorSubsystem.PRIORITY, ElevatorSystemComponent.Elevator,
-						isIdle(), MessageType.Function_Response);
-				this.queue.addMessage(response);
-				logger.info("Responding to function request -> isIdle()");
-				return;
+				this.isIdle = false;
+				this.finalDestination = currentJob.carButton();
+				this.logger.info("Updating ElevatorSubSystem with idle status");
+				this.queue.addMessage(new Message(ElevatorSubsystem.PRIORITY, elevatorNum,
+						false, MessageType.Status_Update));
+				this.servicing = true;
 			}
 
-			ElevatorEvent job = (ElevatorEvent) msg.data();
+			if(!reqFloors.isEmpty()){
+				Collections.sort(reqFloors);
+			}
 
-			int movingTo = job.button();
+			int movingTo = 0;
+			int distance = this.currFloor - movingTo;
 
-			if (Math.max(this.currFloor, movingTo) == currFloor) {
-				this.currentDirection = DOWN;
+			if(this.finalDestination == reqFloors.get(0)){
+				movingTo = currentJob.carButton();
+			}
+			else if (currentJob.floorButton().equals("UP")){
+					movingTo = Math.min(this.finalDestination, reqFloors.get(0));
 			} else {
-				this.currentDirection = UP;
+				movingTo = Math.max(this.currentJob.carButton(), reqFloors.get(0));
+				reqFloors.remove(0);
 			}
 
 			//Computing the time to move between floors
-			double waitTime = TIMETOMOVE * Math.abs(this.currFloor - movingTo);
-			
-			this.isIdle = false;
+			long waitTime = (long) TIMETOMOVE * Math.abs(distance);
+
+			this.motor.startMotor();
 			if (Math.max(this.currFloor, movingTo) == movingTo) {
 				logger.info("Currently on floor " + currFloor + ", moving up.");
+				this.currFloor += 1;
 				Thread.sleep(waitTime); //waiting to move between floors
 			} else {
 				logger.info("Currently on floor " + currFloor + ", moving down.");
+				this.currFloor -= 1;
 				Thread.sleep(waitTime); //waiting to move between floors
 			}
-			this.currFloor = movingTo;
 
-			// Now one the desired floor
-			logger.info("Now on floor " + currFloor);
-			this.openDoor();
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				logger.error(e.getMessage());
-				throw new RuntimeException(e);
+			this.motor.stopMotor();
+
+			logger.info("Arrival Sensor Activated");
+			this.sensor.notifyScheduler(currFloor, queue);
+			if(this.currFloor == movingTo) {
+				// Now one the desired floor
+				logger.info("Now on floor " + currFloor);
+				this.doors.openDoor();
+				this.elevatorLamp.turnOn();
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					logger.error(e.getMessage());
+					throw new RuntimeException(e);
+				}
+				this.doors.closeDoor();
+				this.elevatorLamp.turnOff();
+
+				if(this.currFloor == this.finalDestination) {
+					logger.info("Updating ElevatorSubSystem with idle status");
+					this.queue.addMessage(new Message(ElevatorSubsystem.PRIORITY, elevatorNum,
+							true, MessageType.Status_Update));
+					isIdle = true;
+					this.servicing = false;
+					this.currentJob = null;
+					this.status = ElevatorState.StandBy;
+				}
 			}
-			this.closeDoor();
-			isIdle = true;
-		}
-	}
-	
-	/**
-	 * This method opens the door of the elevator.
-	 */
-	public void openDoor() {
-		logger.info("The doors are opening.");
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			logger.error(e.getMessage());
-		}
-		logger.info("The doors are opened.");
-		this.doorOpen = true;		
-	}
-	
-	/**
-	 * This method closes the door of the elevator.
-	 */
-	public void closeDoor(){
-		logger.info("The doors are closing.");
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			logger.error(e.getMessage());
-		}
-		logger.info("The doors are closed.");
-		this.doorOpen = false;
 	}
 
-	/**
-	 * This method returns whether the door of the elevator is open.
-	 */
-	public boolean isDoorOpen() {
-		return this.doorOpen;
-	}
-
-
-	/**
-	 * This method sets the flag that tells the elevator to shut down
-	 */
-	private void setShutdownFlag() {
-		this.shutdown = true;
-	}
-
-	/**
-	 * This method initiates the shut-down process
-	 */
-	private void continueOrShutdown() {
-		if(this.shutdown) {
-			logger.info("Shutting Down.");
-			Thread.currentThread().interrupt();
-		}
-	}
-	
 	/**
 	 * This method is implemented from the runnable interface
 	 * and allows this class to be run by a thread instance.
 	 */
 	@Override
 	public void run() {
-
 		logger.info("Elevator " + elevatorNum + " started.");
-		while (Thread.currentThread().isAlive()) {
-			if(Thread.currentThread().isInterrupted()) break;
-
+		while (true) {
 			try {
-				executeJob();
+				elevatorOperation();
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
-
-			if(reqFloors.isEmpty() && !queue.hasAMessage(elevatorNum)) continueOrShutdown();
 		}
 	}
 }
