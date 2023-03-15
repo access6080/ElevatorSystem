@@ -1,3 +1,7 @@
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.PortUnreachableException;
+
 /**
  * The Elevator Subsystem controls the elevator.
  *
@@ -5,11 +9,14 @@
  * @author Geoffery Koranteng
  */
 public class ElevatorSubsystem implements Runnable {
-//    private final Map<Integer, Elevator> elevatorList;
+    private final Map<Integer, Elevator> elevatorList;
     private final Elevator elevator;
     private final MessageQueue queue;
     private final Logger logger;
     public static final int PRIORITY = -2;
+    private DatagramSocket receiveSocket;
+    private DatagramPacket packet;
+    private static final PORT = 3003; //Or 3002
     public ElevatorSubsystemState status;
     private enum ElevatorSubsystemState {
         Start,
@@ -28,6 +35,27 @@ public class ElevatorSubsystem implements Runnable {
         this.status = ElevatorSubsystemState.Start;
         this.queue = queue;
         this.logger = new Logger();
+        this.receiveSocket = new DatagramSocket(PORT);
+        //Creating the message service
+    	MessageService msgService = new MessageService(receiveSocket, ElevatorSystemComponent.ElevatorSubSystem);
+    }
+    
+    /**
+     * Create a new elevator subsystem with numElevators and numFloors.
+     * Each elevator has their own message queue.
+     * @param numElevators the number of elevators in the system
+     */
+    public ElevatorSubsystem(int numFloors, int numElevators) {
+    	//Creating the different elevators
+        for(int i = 0, i <= numElevators, i++) {
+        	this.elevatorlist.put(new Elevator(i, numFloors, new MessageQueue());
+        }
+        this.status = ElevatorSubsystemState.Start;
+        this.queue = queue;
+        this.logger = new Logger();
+        this.receiveSocket = new DatagramSocket(PORT);
+        //Creating the message service
+    	MessageService msgService = new MessageService(receiveSocket, ElevatorSystemComponent.ElevatorSubSystem);
     }
 
     private void subsystemOperation() throws InterruptedException {
@@ -63,7 +91,7 @@ public class ElevatorSubsystem implements Runnable {
     private void RespondToFunctionRequest(boolean isIdle) {
         Message msg = new Message(Scheduler.PRIORITY, ElevatorSystemComponent.ElevatorSubSystem,
                 isIdle, MessageType.Function_Response);
-
+		
         this.queue.addMessage(msg);
         logger.info("Responding to Scheduler Request");
         this.status = ElevatorSubsystemState.StandBy;
@@ -74,6 +102,9 @@ public class ElevatorSubsystem implements Runnable {
     public void run() {
         while(Thread.currentThread().isAlive()){
             try {
+            	//Reciving the message and adding it to the queue
+            	this.queue.addMessage(msgService.receive());
+            	//Performing the opertaion
                 subsystemOperation();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
