@@ -1,3 +1,9 @@
+/**
+* The ArrivalSensor class notifies the ElevatorSubsystem on its current floor.
+* 
+* @author Geoffrey Koranteng
+* @version March 10th, 2023
+*/
 public class ArrivalSensor {
 
     private final int floorNum;
