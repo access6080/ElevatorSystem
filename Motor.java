@@ -13,7 +13,7 @@ public class Motor {
     }
 
     /**this returns the current status of the motor
-     * @return status
+     * @return status returns the status of the motor.
      */
     public boolean getStatus(){return status;}
 
