@@ -15,7 +15,7 @@ public class Door {
 
     /**
      * This method gets the current status of the door.
-     * @return status
+     * @return status returns the status of the door
      */
     public DoorState getStatus(){
         return status;
