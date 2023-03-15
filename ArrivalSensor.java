@@ -30,7 +30,7 @@ public class ArrivalSensor {
 
     /**
     * This method sets the sensor to active.
-    * @param active booelan that indicates if the sensor is active or not.
+    * @param active a boolean that indicates if the sensor is active or not.
     */
     public void setActive(boolean active) {
         isActive = active;
