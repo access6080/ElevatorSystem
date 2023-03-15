@@ -8,18 +8,30 @@ public class ArrivalSensor {
         this.isActive =  false;
     }
 
+    /**
+    * This method returns the floor number.
+    */
     public int getFloorNum() {
         return floorNum;
     }
 
+    /**
+    * This method returns true if the sensor is active and false otherwise.
+    */
     public boolean isActive() {
         return isActive;
     }
 
+    /**
+    * This method sets the sensor to active.
+    */
     public void setActive(boolean active) {
         isActive = active;
     }
-
+    
+    /**
+    * This method notifies the scheduler when the arrival sensor is active.
+    */
     private void notifyScheduler()  {
 
     }
