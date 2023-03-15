@@ -16,6 +16,7 @@ public class ArrivalSensor {
 
     /**
     * This method returns the floor number.
+    * @return floorNum returns the floor number
     */
     public int getFloorNum() {
         return floorNum;
@@ -23,6 +24,7 @@ public class ArrivalSensor {
 
     /**
     * This method returns true if the sensor is active and false otherwise.
+    * @return isActive returns boolean representing the state of the sensor
     */
     public boolean isActive() {
         return isActive;
