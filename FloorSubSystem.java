@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 /**
@@ -19,11 +21,9 @@ public class FloorSubSystem{
     private final MessageService service;
     DatagramSocket sendAndReceive;
 
-    public FloorSubSystem(MessageQueue queue){
-        this.queue = queue;
-        this.logger = new Logger();
-    }
-    public FloorSubSystem() {
+    public enum floorButton { UP,DOWN}
+
+    public FloorSubSystem(MessageQueue queue) {
         this.queue = queue;
         this.logger = new Logger();
         try {
@@ -52,16 +52,18 @@ public class FloorSubSystem{
                     throw new RuntimeException(e);
                 }
                 logger.info((String) receivedMessage.data());
-            }
+
 
 
             String line = reader.nextLine();
 
             String[] lineArray = line.split(" ");
 
-            int time = Integer.parseInt(lineArray[0]);
+            String time = lineArray[0];
             int floor = Integer.parseInt(lineArray[1]);
             int button = Integer.parseInt(lineArray[2]);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            LocalDateTime dateTime = LocalDateTime .parse(time,formatter);
             logger.info("Received event request with time " + time + " requesting floor "
                     + floor + " requested floor " + button);
 
@@ -71,9 +73,9 @@ public class FloorSubSystem{
             service.send(msg);
             logger.info("Data sent to Scheduler");
 
-            continueOrShutDown(time);
+
         }
-    }
+    }}
 
     /**
      * This method tells  the system to shuts down or keep operating.
@@ -90,7 +92,7 @@ public class FloorSubSystem{
      * This method is implemented from the runnable interface
      * and allows this class to be run by a thread instance.
      */
-    @Override
+
     public void run() {
         logger.info("Floor Subsystem Started");
         while(Thread.currentThread().isAlive()){
@@ -104,8 +106,7 @@ public class FloorSubSystem{
     }
 
     public static void main(String[] args) {
-
-        messaging = new MessageService();
-        FloorSubSystem FS = new FloorSubSystem(messaging);
+        FloorSubSystem FS = new FloorSubSystem();
     }
+}
 }
