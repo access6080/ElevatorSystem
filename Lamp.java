@@ -1,9 +1,10 @@
+/**
+ * This class models a lamp object
+ * @author Boma Iyaye
+ * @version
+ */
 public class Lamp {
-    /**
-     * This class models a lamp object
-     * @author Boma Iyaye
-     * @version
-     */
+  
     boolean lampState;
 
     /**
