@@ -8,7 +8,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * this a test class for motor class
  * @author chibuzo okpara
- * @version 15th of March, 2023
+ * @version March 15, 2023
  */
 public class MotorTest {
     private Motor motor;
@@ -42,8 +42,8 @@ public class MotorTest {
      */
     @Test
     public void stopMotorTest(){motor.startMotor();
-    motor.stopMotor();
-    assertFalse(motor.getStatus());}
+        motor.stopMotor();
+        assertFalse(motor.getStatus());}
 
 
 }

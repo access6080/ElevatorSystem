@@ -22,13 +22,13 @@ public class Motor {
      */
     public void startMotor(){
         this.status= true;
-        logger.info("motor has started");}
+        logger.info("Motor started");}
 
     /**
      *this method stops the motor
      */
     public void stopMotor(){
         this.status =false;
-        logger.info("motor has stopped");
-        }
+        logger.info("Motor stopped");
+    }
 }

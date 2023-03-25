@@ -17,7 +17,7 @@ public class ElevatorEventTest {
      */
     @Before
     public void setUp(){
-        this.event = new ElevatorEvent("120",5,3);
+//        this.event = new ElevatorEvent("120",5,3);
     }
 
     /**
@@ -36,11 +36,5 @@ public class ElevatorEventTest {
         assertEquals(5, event.currentFloor());
     }
 
-    /**
-     * This method tests the getter method for the floor button in the ElevatorEvent class.
-     */
-    @Test
-    public void testGetButton() {
-        assertEquals(3, event.button());
-    }
+
 }

@@ -5,13 +5,12 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-
+import java.util.HashMap;
 
 /**
  * A class that encapsulates message sending using UDP in the elevator system.
  * It exposes methods to send and receive messages and transforms the message
  * to the appropriate data type based on the sender and the recipient.
- *
  *
  * @author Geoffery Koranteng.
  * @version March 9th, 2023.
@@ -31,14 +30,13 @@ public class MessageService extends MessageQueue {
         this.client = client;
     }
 
-
     /**
      * This method sends a message to the recipient in the given message object.
      *
      * @param msg An object encapsulating the message and meta-data of the message being sent
      */
     public void send(Message msg) {
-        byte[] message = getByteArray(encryptMessage(msg));
+        byte[] message = encryptMessage(msg);
         DatagramPacket sendPacket;
         try {
             sendPacket = new DatagramPacket(message, message.length,
@@ -57,7 +55,7 @@ public class MessageService extends MessageQueue {
     }
 
     /**
-     * This method recieves a message using the socket of the class that calls it.
+     * This method receives a message using the socket of the class that calls it.
      *
      * @return Message received
      */
@@ -65,13 +63,13 @@ public class MessageService extends MessageQueue {
         byte[] data = new byte[1000];
         DatagramPacket receivePacket = new DatagramPacket(data, data.length);
 
-        printMessageInformation(receivePacket, false);
-
         try {
             clientSocket.receive(receivePacket);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        printMessageInformation(receivePacket, false);
 
         Message msg;
         try {
@@ -84,11 +82,12 @@ public class MessageService extends MessageQueue {
     }
 
     /**
-     * Prints to the standard output, the information of a packet being sent or recieved
+     * Prints to the standard output, the information of a packet being sent or received
      * @param sendPacket the packet whose information is printed.
      * @param sending a boolean indicating if the packet is being or receive.
      */
     private void printMessageInformation(DatagramPacket sendPacket, boolean sending) {
+        System.out.println();
         if (sending) {
             System.out.println(client + " : Sending packet:");
             System.out.println("To host: " + sendPacket.getAddress());
@@ -103,8 +102,9 @@ public class MessageService extends MessageQueue {
 
         System.out.println("Length: " + sendPacket.getLength());
         System.out.print("Containing: ");
-        System.out.println(new String(sendPacket.getData()));
+//        System.out.println(new String(sendPacket.getData()));
         System.out.println(Arrays.toString(sendPacket.getData()));
+        System.out.println();
     }
 
     /**
@@ -126,9 +126,9 @@ public class MessageService extends MessageQueue {
     /**
      * Encrypts a message object into an array of bytes.
      * @param msg THe message object being converted.
-     * @return an Arraylist of bytes
+     * @return an array of bytes
      */
-    private ArrayList<Byte> encryptMessage(Message msg){
+    private byte[] encryptMessage(Message msg){
         ArrayList<Byte> message = new ArrayList<>();
         byte sep = (byte) '|';
 
@@ -144,31 +144,63 @@ public class MessageService extends MessageQueue {
         // Add Separator
         message.add(sep);
 
+        //Add Message Type
+        message.add((byte) msg.type().ordinal());
 
+        // Add Separator
+        message.add(sep);
+
+
+        // add Data
         switch (msg.type()){
             case Job -> {
                 ElevatorEvent event = (ElevatorEvent) msg.data();
                 try {
                     byte[] data = serializeData(event);
-                    for (byte  b : data) message.add(b);
+                    addToMessage(message, sep, data);
+
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
 
-            case Function_Request -> {
+            case Function_Response -> {
+                ElevatorStatus status = (ElevatorStatus) msg.data();
+                try {
+                    byte[] data =  serializeData(status);
+                    addToMessage(message, sep, data);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
 
             }
 
         }
 
+        return getByteArray(message);
+    }
+
+
+    /**
+     * @param message The arraylist of bytes of the message being sent
+     * @param sep The token separating the message
+     * @param data the data being added to the message
+     */
+    private static void addToMessage(ArrayList<Byte> message, byte sep, byte[] data) {
+        // add length of  data
+        // convert length to string
+        String len = String.valueOf(data.length);
+        byte[] lenArr = len.getBytes();
+        message.add((byte) lenArr.length);
+
+        //Add  Separator
+        message.add(sep);
+        for(byte b: lenArr) message.add(b);
+
         // Add Separator
         message.add(sep);
 
-        //Add Message Type
-        message.add((byte) msg.type().ordinal());
-
-        return message;
+        for (byte  b : data) message.add(b);
     }
 
     /**
@@ -186,34 +218,49 @@ public class MessageService extends MessageQueue {
     }
 
     /**
-     * @param arr
-     * @return
-     * @throws IOException
+     * @param arr the byte array being decrypted
+     * @return a message Object
+     * @throws IOException thrown when serialization fails
      */
     private Message decryptByteArray(byte[] arr) throws IOException {
         byte sender = arr[0];
         byte recipient = arr[2];
-        byte[] message = Arrays.copyOfRange(arr, 4,arr.length - 1);
-        byte type = arr[arr.length - 1];
-
-        ByteArrayInputStream bios =  new ByteArrayInputStream(message);
-        ObjectInputStream ois = new ObjectInputStream(bios);
-        ElevatorEvent event;
-        try {
-            event = (ElevatorEvent) ois.readObject();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
+        int type = arr[4] ;
+        int len = arr[6];
 
         ElevatorSystemComponent msgSender =  ElevatorSystemComponent.values()[sender];
         ElevatorSystemComponent msgRecipient = ElevatorSystemComponent.values()[recipient];
-        Object data = event;
         MessageType msgType =  MessageType.values()[type];
 
-        return new Message(msgSender, msgRecipient, data, msgType);
+        if(MessageType.values()[type].equals(MessageType.Job) ||
+                MessageType.values()[type].equals(MessageType.Function_Response) ||
+                MessageType.values()[type].equals(MessageType.ArrivalSensorActivated)){
+            int messageStart = 8 + len;
+            byte[] lengthOfData = Arrays.copyOfRange(arr, 8, messageStart);
+            int dataLength = Integer.parseInt(new String(lengthOfData));
+            int messageEnd = (messageStart + dataLength + 1);
+            byte[] message = Arrays.copyOfRange(arr, messageStart + 1,  messageEnd);
+            ByteArrayInputStream bios =  new ByteArrayInputStream(message);
+            ObjectInputStream ois = new ObjectInputStream(bios);
+            Object event;
+
+            try {
+                event = ois.readObject();
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+
+            return new Message(msgSender, msgRecipient, event, msgType);
+        }
+
+       return new Message(msgSender, msgRecipient, null, msgType);
     }
 
+    /**
+     * Converts an arraylist of bytes into an array  of  bytes
+     * @param arr the arraylist of bytes being converted
+     * @return an array of bytes.
+     */
     private byte[] getByteArray(ArrayList<Byte> arr) {
         byte[] result = new byte[arr.size()];
 

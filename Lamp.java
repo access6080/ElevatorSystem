@@ -1,10 +1,10 @@
 /**
  * This class models a lamp object
  * @author Boma Iyaye
- * @version
+ * @version March 10th, 2023
  */
 public class Lamp {
-  
+
     boolean lampState;
 
     /**
@@ -35,4 +35,3 @@ public class Lamp {
         return lampState;
     }
 }
-

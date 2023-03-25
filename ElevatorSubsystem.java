@@ -1,6 +1,7 @@
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.PortUnreachableException;
+import java.net.SocketException;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 /**
  * The Elevator Subsystem controls the elevator.
@@ -9,15 +10,17 @@ import java.net.PortUnreachableException;
  * @author Geoffery Koranteng
  */
 public class ElevatorSubsystem implements Runnable {
-    private final Map<Integer, Elevator> elevatorList;
-    private final Elevator elevator;
-    private final MessageQueue queue;
+    private final HashMap<Integer, Elevator> elevatorList;
+    private final HashMap<Integer, Boolean> statuses;
     private final Logger logger;
+    private final LinkedList<ElevatorEvent> jobQueue;
+
+    private final MessageQueue messageQueue;
     public static final int PRIORITY = -2;
-    private DatagramSocket receiveSocket;
-    private DatagramPacket packet;
-    private static final PORT = 3003; //Or 3002
+    private static final int PORT = 3003;
     public ElevatorSubsystemState status;
+    public MessageService service;
+    public  static final int ElevatorNumber = 4;
     private enum ElevatorSubsystemState {
         Start,
         Checking_Elevator_Status,
@@ -26,114 +29,116 @@ public class ElevatorSubsystem implements Runnable {
         StandBy
     }
 
-    /**
-     * Create a new elevator subsystem with numElevators and numFloors
-     * @param numElevators the number of elevators in the system
-     */
-    public ElevatorSubsystem(int numFloors, int numElevators, MessageQueue queue) {
-        this.elevator = new Elevator(1, numFloors, queue);
-        this.status = ElevatorSubsystemState.Start;
-        this.queue = queue;
-        this.logger = new Logger();
-        this.receiveSocket = new DatagramSocket(PORT);
-        //Creating the message service
-    	MessageService msgService = new MessageService(receiveSocket, ElevatorSystemComponent.ElevatorSubSystem);
-    }
-    
+
     /**
      * Create a new elevator subsystem with numElevators and numFloors.
      * Each elevator has their own message queue.
-     * @param numElevators the number of elevators in the system
      */
-    public ElevatorSubsystem(int numFloors, int numElevators) {
-    	//Creating the different elevators
-        for(int i = 0, i <= numElevators, i++) {
-        	this.elevatorlist.put(new Elevator(i, numFloors, new MessageQueue());
-        }
+    public ElevatorSubsystem(int numFloors) {
         this.status = ElevatorSubsystemState.Start;
-        this.queue = queue;
         this.logger = new Logger();
-        this.receiveSocket = new DatagramSocket(PORT);
+        this.jobQueue = new LinkedList<>();
+
+        DatagramSocket receiveSocket;
+        try {
+            receiveSocket = new DatagramSocket(PORT);
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        }
+
         //Creating the message service
-    	MessageService msgService = new MessageService(receiveSocket, ElevatorSystemComponent.ElevatorSubSystem);
+        this.service = new MessageService(receiveSocket, ElevatorSystemComponent.ElevatorSubSystem);
+        this.messageQueue = new MessageQueue();
+        this.statuses = new HashMap<>();
+        this.elevatorList = createElevators(numFloors);
     }
 
-    private void subsystemOperation() throws InterruptedException {
-        ElevatorEvent new_job = null;
-        boolean isIdle = false;
-        boolean hasMessage = this.queue.hasAMessage(PRIORITY);
-        if(hasMessage){
-            Message msg = this.queue.getMessage(PRIORITY);
+    private HashMap<Integer, Elevator> createElevators(int numFloors) {
+        HashMap<Integer, Elevator> elevators = new HashMap<>();
 
-            if(msg.type() == MessageType.Function_Request){
-                this.status = ElevatorSubsystemState.Checking_Elevator_Status;
-            }
-
-            if(msg.type() == MessageType.Job){
-                this.status = ElevatorSubsystemState.Sending_Elevator_New_Job;
-                new_job = (ElevatorEvent) msg.data();
-            }
-
-            if(msg.type() ==  MessageType.Function_Response){
-                this.status = ElevatorSubsystemState.Awaiting_Elevator_Response;
-                isIdle = (boolean) msg.data();
-            }
+        for(int i = 1; i < ElevatorSubsystem.ElevatorNumber + 1; i++ ){
+            elevators.put(i, new Elevator(i, this.messageQueue));
         }
 
+        return elevators;
+    }
+    private void subsystemOperation()  {
         switch (this.status){
             case Start -> startup();
-            case Checking_Elevator_Status -> checkElevatorStatus();
-            case Sending_Elevator_New_Job -> dispatchNewJob(new_job);
-            case Awaiting_Elevator_Response -> RespondToFunctionRequest(isIdle);
+            case StandBy -> standby();
+            case Checking_Elevator_Status -> RespondToFunctionRequest();
+            case Sending_Elevator_New_Job -> dispatchNewJob();
         }
     }
+    private void standby() {
+        Message msg = this.service.receive();
 
-    private void RespondToFunctionRequest(boolean isIdle) {
-        Message msg = new Message(Scheduler.PRIORITY, ElevatorSystemComponent.ElevatorSubSystem,
-                isIdle, MessageType.Function_Response);
-		
-        this.queue.addMessage(msg);
+        if(msg.type() == MessageType.Function_Request){
+            this.status = ElevatorSubsystemState.Checking_Elevator_Status;
+        }
+
+        if(msg.type() == MessageType.Job){
+            this.status = ElevatorSubsystemState.Sending_Elevator_New_Job;
+            jobQueue.add((ElevatorEvent) msg.data());
+        }
+      }
+    private void RespondToFunctionRequest() {
+        Message msg = new Message(ElevatorSystemComponent.ElevatorSubSystem, ElevatorSystemComponent.Scheduler,
+                new ElevatorStatus(this.statuses), MessageType.Function_Response);
+
+        this.service.send(msg);
         logger.info("Responding to Scheduler Request");
         this.status = ElevatorSubsystemState.StandBy;
     }
-
-
-    @Override
-    public void run() {
-        while(Thread.currentThread().isAlive()){
-            try {
-            	//Reciving the message and adding it to the queue
-            	this.queue.addMessage(msgService.receive());
-            	//Performing the opertaion
-                subsystemOperation();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
     private void startup() {
         //Start the elevators
-        Thread elevatorThread = new Thread(this.elevator, "Elevator 1");
-        elevatorThread.start();
-
+        for(Elevator e: elevatorList.values()){
+            new Thread(e, "Thread " + e.getElevatorNum()).start();
+            this.statuses.put(e.getElevatorNum(), true);
+        }
         this.status = ElevatorSubsystemState.StandBy;
     }
-
-    private void dispatchNewJob(ElevatorEvent job) {
-        Message msg = new Message(1, ElevatorSystemComponent.ElevatorSubSystem, job, MessageType.Job);
-        logger.info("Sending a new Job to Elevator " + 1);
-        this.queue.addMessage(msg);
+    private void dispatchNewJob() {
+        ElevatorEvent job  =  jobQueue.poll();
+        if(job == null) return;
+        Message msg = new Message(job.elevatorNum(), ElevatorSystemComponent.ElevatorSubSystem, job, MessageType.Job);
+        logger.info("Sending a new Job to Elevator " + job.elevatorNum());
+        this.messageQueue.addMessage(msg);
         this.status = ElevatorSubsystemState.StandBy;
     }
 
     private void checkElevatorStatus() {
         logger.info("Checking the status of the elevator");
+        while (this.messageQueue.hasAMessage(PRIORITY)){
+            try {
+                Message msg = this.messageQueue.getMessage(PRIORITY);
+                if(msg.type() == MessageType.Status_Update){
+                    this.statuses.put(msg.getElevator(), (boolean) msg.data());
+                }
+                if(msg.type() == MessageType.ArrivalSensorActivated){
+                    this.service.send(new Message(ElevatorSystemComponent.ElevatorSubSystem,
+                            ElevatorSystemComponent.Scheduler, msg.data(), MessageType.ArrivalSensorActivated));
+                }
 
-        Message msg = new Message(this.elevator.getElevatorNum(),
-                ElevatorSystemComponent.ElevatorSubSystem, null, MessageType.Function_Request);
-        this.queue.addMessage(msg);
-        this.status = ElevatorSubsystemState.StandBy;
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        if(!this.status.equals(ElevatorSubsystemState.Checking_Elevator_Status )&&
+                !this.status.equals(ElevatorSubsystemState.Sending_Elevator_New_Job))
+            this.status = ElevatorSubsystemState.StandBy;
+    }
+
+    public void run() {
+        while(true) {
+            subsystemOperation();
+            checkElevatorStatus();
+        }
+    }
+
+    public static void main(String[] args) {
+        ElevatorSubsystem elevatorSubsystem  = new ElevatorSubsystem(20);
+        elevatorSubsystem.run();
     }
 }
-

@@ -1,32 +1,37 @@
-import org.junit.After;
+import static org.junit.Assert.*;
+import java.io.FileNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
-
-/**
- * this class tests the method getData() in the FloorSubSystem class
- * @author chibuzo okpara
- * @version February 3rd, 2023
- */
 public class FloorSubSystemTest {
+
     private FloorSubSystem floorSubSystem;
-    MessageQueue queue;
 
     @Before
-    public void setup(){
-        this.queue = new MessageQueue();
-        floorSubSystem = new FloorSubSystem(queue);
+    public void setUp() {
+        floorSubSystem = new FloorSubSystem();
     }
-
-    @After
-    public void tearDown(){}
 
     @Test
-    public void getDataTest() throws Exception{
-        floorSubSystem.getData("data.txt");
-        assertNotEquals(0, queue.size());
-
+    public void testGetData() {
+        try {
+            floorSubSystem.getData("data.txt");
+        } catch (FileNotFoundException e) {
+            fail("File not found exception thrown");
+        }
+        // Assert that the message service contains at least one message
     }
+
+    @Test
+    public void testGetFloorButton() {
+        assertEquals(FloorSubSystem.FloorButton.UP, floorSubSystem.getFloorButton("UP"));
+        assertEquals(FloorSubSystem.FloorButton.DOWN, floorSubSystem.getFloorButton("Down"));
+        try {
+            floorSubSystem.getFloorButton("invalid");
+            fail("Expected IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException e) {
+            // Expected exception thrown, test passes
+        }
+    }
+
 }

@@ -1,8 +1,12 @@
 import java.io.*;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.Scanner;
 
 /**
@@ -14,24 +18,24 @@ import java.util.Scanner;
  * @version January 29th, 2023
  */
 public class FloorSubSystem{
-
-    private final MessageQueue queue;
     private final Logger logger;
     public static int PRIORITY = -1;
     private final MessageService service;
     DatagramSocket sendAndReceive;
 
-    public enum floorButton { UP,DOWN}
+    public enum FloorButton {
+        UP,
+        DOWN
+    }
 
-    public FloorSubSystem(MessageQueue queue) {
-        this.queue = queue;
+    public FloorSubSystem() {
         this.logger = new Logger();
         try {
-            sendAndReceive =new DatagramSocket(3001);
+            sendAndReceive = new DatagramSocket(3001);
         } catch (SocketException e) {
             throw new RuntimeException(e);
         }
-        this.service= new MessageService(sendAndReceive);
+        this.service = new MessageService(sendAndReceive, ElevatorSystemComponent.FloorSubSystem);
     }
 
     /**
@@ -43,50 +47,50 @@ public class FloorSubSystem{
         File file = new File(filename);
         Scanner reader = new Scanner(file);
         reader.nextLine();
+
         while(reader.hasNextLine()){
-            Message receivedMessage;
-            if(queue.hasAMessage(PRIORITY)){
-                try {
-                    receivedMessage = queue.getMessage(PRIORITY);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                logger.info((String) receivedMessage.data());
-
-
-
             String line = reader.nextLine();
 
             String[] lineArray = line.split(" ");
 
             String time = lineArray[0];
             int floor = Integer.parseInt(lineArray[1]);
-            int button = Integer.parseInt(lineArray[2]);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-            LocalDateTime dateTime = LocalDateTime .parse(time,formatter);
-            logger.info("Received event request with time " + time + " requesting floor "
-                    + floor + " requested floor " + button);
+            FloorButton floorButton = getFloorButton(lineArray[2]);
+            int carButton = Integer.parseInt(lineArray[3]);
 
-            ElevatorEvent event = new ElevatorEvent(time, floor, button);
-            Message msg = new Message(Scheduler.PRIORITY,
-                    ElevatorSystemComponent.FloorSubSystem, event, MessageType.Job);
+            DateFormat dateFormat = new SimpleDateFormat("hh:mm:ss");
+            Date dateTime  = null;
+            try {
+                dateTime = dateFormat.parse(time);
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+
+
+            logger.info("Received event request with time " + time + " on floor "
+                        + floor + " going " + floorButton  + " to requested floor " + carButton);
+
+            ElevatorEvent event = new ElevatorEvent(dateTime, floor, floorButton, carButton);
+            Message msg = new Message(ElevatorSystemComponent.FloorSubSystem, ElevatorSystemComponent.Scheduler,
+                    event, MessageType.Job);
             service.send(msg);
             logger.info("Data sent to Scheduler");
-
-
-        }
-    }}
-
-    /**
-     * This method tells  the system to shuts down or keep operating.
-     * @param token a token that tells the system to shut down
-     */
-    private void continueOrShutDown(int token) {
-        if(token == Scheduler.SHUTDOWN) {
-            logger.info("Shutting Down");
-            Thread.currentThread().interrupt();
         }
     }
+
+    public FloorButton getFloorButton(String s) {
+        switch(s) {
+            case "UP" -> {
+                return FloorButton.UP;
+            }
+            case "Down" -> {
+                return FloorButton.DOWN;
+            }
+            default -> throw new IllegalArgumentException("Illegal Argument");
+        }
+
+}
+
 
     /**
      * This method is implemented from the runnable interface
@@ -95,18 +99,31 @@ public class FloorSubSystem{
 
     public void run() {
         logger.info("Floor Subsystem Started");
-        while(Thread.currentThread().isAlive()){
-            if(Thread.currentThread().isInterrupted()) break;
-            try {
-                getData("data.txt");
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            getData("data.txt");
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        while(true) {
+            Message msg = this.service.receive();
+            processMessages(msg);
+        }
+    }
+
+    public void processMessages(Message msg) {
+        if(msg.type().equals(MessageType.ArrivalSensorActivated)){
+            ElevatorRequest req = (ElevatorRequest) msg.data();
+            logger.info("Elevator " + req.elevatorNum() + "reached floor " + req.floor());
+        } else if (msg.type().equals(MessageType.ElevatorJobComplete)) {
+            ElevatorUpdate data = (ElevatorUpdate) msg.data();
+            logger.info("Elevator " + data.elevatorNum() + " completed Job");
         }
     }
 
     public static void main(String[] args) {
-        FloorSubSystem FS = new FloorSubSystem();
+        FloorSubSystem floorSubSystem = new FloorSubSystem();
+        floorSubSystem.run();
+
     }
-}
 }

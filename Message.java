@@ -8,8 +8,9 @@ import java.util.Objects;
  */
 public final class Message {
     private  int priority;
-    private final ElevatorSystemComponent sender;
-    private  ElevatorSystemComponent recipient;
+    private  ElevatorSystemComponent sender;
+    private ElevatorSystemComponent recipient;
+    private int elevator;
     private final Object data;
     private final MessageType type;
 
@@ -21,6 +22,13 @@ public final class Message {
     public Message(int priority, ElevatorSystemComponent sender, Object data, MessageType type) {
         this.priority = priority;
         this.sender = sender;
+        this.data = data;
+        this.type = type;
+    }
+
+    public Message(int priority, int sender, Object data, MessageType type) {
+        this.priority = priority;
+        this.elevator = sender;
         this.data = data;
         this.type = type;
     }
@@ -47,6 +55,10 @@ public final class Message {
 
     public MessageType type() {
         return type;
+    }
+
+    public int getElevator() {
+        return elevator;
     }
 
     public ElevatorSystemComponent recipient() {

@@ -13,18 +13,16 @@ Description:
 This is a java object oriented model of the elevator systems in a building.It models the floor subsystem,Elevator Subsystem and schedular.
 
 This system contains the following classes:
-Elevator.java                        ElevatorSystem.java                MotorTest.java
-ElevatorEvent.java                   ElevatorSystemComponent.java       DoorTest.java
-ElevatorEventTest.java               ElevatorTest.java                  LampTest.java
+Elevator.java                        ElevatorSystem.java
+ElevatorEvent.java                   ElevatorSystemComponent.java
+ElevatorEventTest.java               ElevatorTest.java
 ElevatorRequest.java                 FloorSubSystem.java
 ElevatorRequestTest.java             FloorSubSystemTest.java                         
 Message.java                         Logger.java
 MessageQueue.java                    Scheduler.java  
 MessageQueueTest.java                SchedulerTest.java
-MessageTest.java                     Motor.java
-data.txt                             Door.java
-ArrivalSensor.java                   Lamp.java
-MessageService.java                  MessageType.java
+MessageTest.java
+data.txt
 
 
 Installation :
@@ -40,37 +38,21 @@ Boma Iyaye
 -ElevatorRequestTest.java
 -Logger.java
 -UML Diagram
--Scheduler State Diagram
--Lamp.java
-
 Geoffery Koranteng
 -Message.java
 -MessageQueue.java
 -Scheduler.java
 -ElevatorSystem.java
 -ElevatorSubSystem.java
--ArrivalSensor.java
--MessageService.java
--MessageType.java
-
 Chibuzo Okpara
 -FloorSubSystem.java
 -FloorSubSystemTest.java
--Motor.java
--elevatorSubSystem State Diagram
--elevator state diagram
--LampTest.java
--DoorTest.java
--MotorTest.java
-
 Ajayi, Tomisin
 -ElevatorEvent.java
 -Logger.java
 -ElevatorEventTest.java
 -Sequence Diagram
 -Scheduler.java
--Door.java
-
 Eid, Saad
 -Elevator.java
 -ElevatorTest.java

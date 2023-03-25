@@ -32,6 +32,6 @@ public class ElevatorRequestTest {
      */
     @org.junit.Test
     public void requestedFloorTest() {
-        assertEquals(12,request.requestedFloor());
+        assertEquals(12,request.floor());
     }
 }

@@ -1,3 +1,4 @@
+import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
@@ -12,9 +13,9 @@ import java.util.LinkedList;
  */
 public class MessageQueue {
     /** The backing data structure of the Message queue class*/
-    private final LinkedList<Message> elevatorlist;
+    private final HashMap<Integer, LinkedList<Message>> elevatorList;
     private final LinkedList<Message> schedulerList;
-    private final LinkedList<Message> floorsubsystemList;
+    private final LinkedList<Message> floorSubsystemList;
     private final LinkedList<Message> elevatorSubsystemList;
 
 
@@ -23,10 +24,20 @@ public class MessageQueue {
      * It instantiates the backing data structure - the arraylist.
      */
     public MessageQueue() {
-        this.elevatorlist = new LinkedList<>();
+        this.elevatorList = generateElevatorList();
         this.schedulerList = new LinkedList<>();
-        this.floorsubsystemList = new LinkedList<>();
+        this.floorSubsystemList = new LinkedList<>();
         this.elevatorSubsystemList = new LinkedList<>();
+    }
+
+    private HashMap<Integer, LinkedList<Message>> generateElevatorList() {
+        HashMap<Integer, LinkedList<Message>> elevatorList = new HashMap<>();
+
+        for(int i = 1; i < 5; i++){
+            elevatorList.put(i, new LinkedList<>());
+        }
+
+        return elevatorList;
     }
 
     /**
@@ -47,11 +58,11 @@ public class MessageQueue {
             }
 
             if (priority == FloorSubSystem.PRIORITY) {
-                return this.floorsubsystemList.pollFirst();
+                return this.floorSubsystemList.pollFirst();
             }
 
             if (priority > Scheduler.PRIORITY) {
-                return this.elevatorlist.pollFirst();
+                return this.elevatorList.get(priority).pollFirst();
             }
         }
 
@@ -65,9 +76,9 @@ public class MessageQueue {
     public synchronized void addMessage(Message m){
         if(m.priority() == Scheduler.PRIORITY) this.schedulerList.addLast(m);
 
-        if(m.priority() > Scheduler.PRIORITY) this.elevatorlist.addLast(m);
+        if(m.priority() > Scheduler.PRIORITY) this.elevatorList.get(m.priority()).addLast(m);
 
-        if(m.priority() == FloorSubSystem.PRIORITY) this.floorsubsystemList.addLast(m);
+        if(m.priority() == FloorSubSystem.PRIORITY) this.floorSubsystemList.addLast(m);
         if(m.priority() == ElevatorSubsystem.PRIORITY) this.elevatorSubsystemList.addLast(m);
     }
 
@@ -85,7 +96,7 @@ public class MessageQueue {
      * @return the size of the queue.
      */
     public synchronized int size(){
-        return (elevatorlist.size() + schedulerList.size() + floorsubsystemList.size() + elevatorSubsystemList.size());
+        return (elevatorList.size() + schedulerList.size() + floorSubsystemList.size() + elevatorSubsystemList.size());
     }
 
     /**
@@ -96,10 +107,10 @@ public class MessageQueue {
      */
     public boolean hasAMessage(int priority) {
         if(priority == Scheduler.PRIORITY) return schedulerList.size() != 0;
-        if(priority == FloorSubSystem.PRIORITY) return floorsubsystemList.size() != 0;
+        if(priority == FloorSubSystem.PRIORITY) return floorSubsystemList.size() != 0;
         if(priority == ElevatorSubsystem.PRIORITY) return elevatorSubsystemList.size() != 0;
 
-        if(priority > Scheduler.PRIORITY) return elevatorlist.size() != 0;
+        if(priority > Scheduler.PRIORITY) return elevatorList.get(priority).size() != 0;
 
         return false;
     }

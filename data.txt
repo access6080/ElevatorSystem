@@ -1,5 +1,2 @@
 Time Floor FloorButton CarButton
-12:10:00 1 UP 20
-12:20:00 20 Down 5
-12:30:00 5 UP 10
-12:40:00 10 Down 1
+12:10:00 3 UP 3

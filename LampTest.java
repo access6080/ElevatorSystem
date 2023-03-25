@@ -8,7 +8,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * this class tests the lamp class
  * @author chibuzo okpara
- * @version 15th of March, 2023
+ * @version March 10, 2023
  */
 public class LampTest {
     private Lamp lamp;

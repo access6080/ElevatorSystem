@@ -8,7 +8,7 @@ import static org.junit.Assert.assertNotEquals;
 /**
  * this class tests the door class
  * @author chibuzo okpara
- * @version 15th of March, 2023
+ * @version March 10, 2023
  */
 public class DoorTest {
     private Door door;
@@ -37,14 +37,14 @@ public class DoorTest {
     public void movingDoorTest(){
         door.doorMoving();
         assertEquals(Door.DoorState.MOVING, door.getStatus());
-        }
+    }
 
     @Test
     public void closedWhileMovingDoorTest(){
         door.doorMoving();
         door.openDoor();
         assertNotEquals(Door.DoorState.OPEN, door.getStatus());
-        }
+    }
     @Test
     public void closedDoorTest(){
         door.openDoor();
@@ -52,8 +52,7 @@ public class DoorTest {
         assertEquals(Door.DoorState.OPEN, door.getStatus());
     }
 
-    }
-
+}
 
 
 

@@ -34,7 +34,7 @@ public class Elevator implements Runnable {
 	}
 
 	//The time to move one floor in the elevator.
-	private static final int TIMETOMOVE = 1000; //TODO: The 1000 is used as a place holder for now.
+	private static final int TimeToMoveOneFloor = 6000;
 
 	/**
 	 *  Constructor of the elevator class.
@@ -156,7 +156,7 @@ public class Elevator implements Runnable {
 			if(this.finalDestination == reqFloors.get(0)){
 				movingTo = currentJob.carButton();
 			}
-			else if (currentJob.floorButton().equals("UP")){
+			else if (currentJob.floorButton().equals(FloorSubSystem.FloorButton.UP)){
 					movingTo = Math.min(this.finalDestination, reqFloors.get(0));
 			} else {
 				movingTo = Math.max(this.currentJob.carButton(), reqFloors.get(0));
@@ -164,7 +164,7 @@ public class Elevator implements Runnable {
 			}
 
 			//Computing the time to move between floors
-			long waitTime = (long) TIMETOMOVE * Math.abs(distance);
+			long waitTime = (long) TimeToMoveOneFloor * Math.abs(distance);
 
 			this.motor.startMotor();
 			if (Math.max(this.currFloor, movingTo) == movingTo) {
@@ -180,14 +180,15 @@ public class Elevator implements Runnable {
 			this.motor.stopMotor();
 
 			logger.info("Arrival Sensor Activated");
-			this.sensor.notifyScheduler(currFloor, queue);
+			ElevatorRequest update = new ElevatorRequest(this.elevatorNum,  currFloor);
+			this.sensor.notifyScheduler(update, queue);
 			if(this.currFloor == movingTo) {
 				// Now one the desired floor
 				logger.info("Now on floor " + currFloor);
 				this.doors.openDoor();
 				this.elevatorLamp.turnOn();
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(7000);
 				} catch (InterruptedException e) {
 					logger.error(e.getMessage());
 					throw new RuntimeException(e);
