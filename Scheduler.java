@@ -187,6 +187,12 @@ public class Scheduler {
         this.status = SchedulerState.AWAITING_ELEVATOR_STATE;
     }
 
+    /**
+     * This method returns the time difference between the time the system starts and
+     * the time the message enters the system.
+     * @param time the time the message enters the system
+     * @return the time difference in long format
+     */
     public long getTime(long time){
         return time - startTime;
     }
