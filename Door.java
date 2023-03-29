@@ -5,7 +5,7 @@
  * @version March 10th, 2022
  */
 public class Door {
-    public enum DoorState{OPEN, MOVING, CLOSED}
+    public enum DoorState{OPEN, MOVING, CLOSED, STUCK}
 
     private DoorState status;
 
@@ -40,5 +40,12 @@ public class Door {
      */
     public void doorMoving(){
         status = DoorState.MOVING;
+    }
+
+    /**
+     * This method sets the status of the door to STUCK.
+     */
+    public void doorStuck() {
+        status = DoorState.STUCK;
     }
 }
