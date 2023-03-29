@@ -1,5 +1,8 @@
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -38,6 +41,8 @@ public class Scheduler {
 
     private HashMap<Integer, Integer> elevatorLocations;
 
+    private final long startTime;
+
     /**
      * The constructor of the scheduler class.
      *
@@ -50,6 +55,7 @@ public class Scheduler {
         this.jobQueue = new LinkedList<>();
         this.logger = new Logger();
         this.status = SchedulerState.START;
+        this.startTime = System.currentTimeMillis();
     }
 
     public Scheduler() {
@@ -60,6 +66,7 @@ public class Scheduler {
         this.status = SchedulerState.START;
         this.elevatorLocations = getElevatorLocations();
         this.algorithm = new SchedulerAlgorithm();
+        this.startTime = System.currentTimeMillis();
 
         DatagramSocket sendReceiveSocket;
         try {
@@ -178,6 +185,10 @@ public class Scheduler {
         this.service.send(msg);
 
         this.status = SchedulerState.AWAITING_ELEVATOR_STATE;
+    }
+
+    public long getTime(long time){
+        return time - startTime;
     }
 
     /**
