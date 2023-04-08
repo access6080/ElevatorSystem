@@ -57,5 +57,6 @@ Eid, Saad
 -Elevator.java
 -ElevatorTest.java
 -ElevatorSubSystem.java
+-GUI.java
 
 copyrights belong to SYSC 3303 Group 4 2023
