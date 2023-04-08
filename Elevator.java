@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 
+
 /**
  * The Elevator class models the elevator component.
  *
@@ -27,6 +28,7 @@ public class Elevator implements Runnable {
 	private ElevatorState status;
 	private boolean isIdle;
 	private final ArrivalSensor sensor;
+	private GUI elevatorGUI;
 	private enum ElevatorState {
 		Start,
 		Servicing_Request,
@@ -58,6 +60,29 @@ public class Elevator implements Runnable {
 		this.elevatorLamp = new Lamp();
 	}
 
+	/**
+	 *  Constructor of the elevator class.
+	 *  Instantiates the data structure - arraylist and message queue
+	 */
+	public Elevator (int elevatorNum, MessageQueue queue, GUI elevatorGUI) {
+		this.elevatorNum = elevatorNum;
+		this.movingUp = false;
+		this.movingDown = false;
+		this.currFloor = 1;
+		this.jobQueue = new LinkedList<>();
+		this.reqFloors = new ArrayList<>();
+		this.queue = queue;
+		this.logger = new Logger();
+		this.isIdle = true;
+		this.doors = new Door();
+		this.status = ElevatorState.Start;
+		this.sensor = new ArrivalSensor();
+		this.servicing = false;
+		this.motor = new Motor();
+		this.elevatorLamp = new Lamp();
+		this.elevatorGUI = elevatorGUI;
+	}
+	
 	/**
 	 * This method returns the current floor
 	 *
@@ -128,6 +153,7 @@ public class Elevator implements Runnable {
 			}
 		}
 		this.status = ElevatorState.StandBy;
+		elevatorGUI.setRequest(this.elevatorNum, "STAND BY");
 	}
 
 	/**
@@ -169,12 +195,16 @@ public class Elevator implements Runnable {
 			this.motor.startMotor();
 			if (Math.max(this.currFloor, movingTo) == movingTo) {
 				logger.info("Currently on floor " + currFloor + ", moving up.");
+				elevatorGUI.setDirectionInfo(elevatorNum, "UP");
 				this.currFloor += 1;
 				Thread.sleep(waitTime); //waiting to move between floors
+				elevatorGUI.setCurrentFloor(elevatorNum, this.currFloor);
 			} else {
 				logger.info("Currently on floor " + currFloor + ", moving down.");
+				elevatorGUI.setDirectionInfo(elevatorNum, "DOWN");
 				this.currFloor -= 1;
 				Thread.sleep(waitTime); //waiting to move between floors
+				elevatorGUI.setCurrentFloor(elevatorNum, this.currFloor);
 			}
 
 			this.motor.stopMotor();
@@ -186,6 +216,7 @@ public class Elevator implements Runnable {
 				// Now one the desired floor
 				logger.info("Now on floor " + currFloor);
 				this.doors.openDoor();
+				this.elevatorGUI.setDoorsInfo(this.elevatorNum, GUI.Status.Open);
 				this.elevatorLamp.turnOn();
 				try {
 					Thread.sleep(7000);
@@ -194,6 +225,7 @@ public class Elevator implements Runnable {
 					throw new RuntimeException(e);
 				}
 				this.doors.closeDoor();
+				this.elevatorGUI.setDoorsInfo(this.elevatorNum, GUI.Status.Closed);
 				this.elevatorLamp.turnOff();
 
 				if(this.currFloor == this.finalDestination) {
@@ -201,9 +233,11 @@ public class Elevator implements Runnable {
 					this.queue.addMessage(new Message(ElevatorSubsystem.PRIORITY, elevatorNum,
 							true, MessageType.Status_Update));
 					isIdle = true;
+					this.elevatorGUI.setRequest(this.elevatorNum, "IDLE");
 					this.servicing = false;
 					this.currentJob = null;
 					this.status = ElevatorState.StandBy;
+					this.elevatorGUI.setRequest(this.elevatorNum, "STAND BY");
 				}
 			}
 	}
