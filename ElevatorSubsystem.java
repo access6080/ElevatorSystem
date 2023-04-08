@@ -21,6 +21,7 @@ public class ElevatorSubsystem implements Runnable {
     public ElevatorSubsystemState status;
     public MessageService service;
     public  static final int ElevatorNumber = 4;
+    private GUI elevatorGUI;
     private enum ElevatorSubsystemState {
         Start,
         Checking_Elevator_Status,
@@ -37,6 +38,7 @@ public class ElevatorSubsystem implements Runnable {
     public ElevatorSubsystem(int numFloors) {
         this.status = ElevatorSubsystemState.Start;
         this.logger = new Logger();
+        this.elevatorGUI = new GUI();
         this.jobQueue = new LinkedList<>();
 
         DatagramSocket receiveSocket;
@@ -58,10 +60,13 @@ public class ElevatorSubsystem implements Runnable {
 
         for(int i = 1; i < ElevatorSubsystem.ElevatorNumber + 1; i++ ){
             elevators.put(i, new Elevator(i, this.messageQueue));
+            //elevators.put(i, new Elevator(i, this.messageQueue, elevatorGUI));
         }
 
         return elevators;
     }
+    
+    
     private void subsystemOperation()  {
         switch (this.status){
             case Start -> startup();
@@ -70,6 +75,7 @@ public class ElevatorSubsystem implements Runnable {
             case Sending_Elevator_New_Job -> dispatchNewJob();
         }
     }
+    
     private void standby() {
         Message msg = this.service.receive();
 
@@ -82,6 +88,7 @@ public class ElevatorSubsystem implements Runnable {
             jobQueue.add((ElevatorEvent) msg.data());
         }
       }
+    
     private void RespondToFunctionRequest() {
         Message msg = new Message(ElevatorSystemComponent.ElevatorSubSystem, ElevatorSystemComponent.Scheduler,
                 new ElevatorStatus(this.statuses), MessageType.Function_Response);
@@ -90,6 +97,7 @@ public class ElevatorSubsystem implements Runnable {
         logger.info("Responding to Scheduler Request");
         this.status = ElevatorSubsystemState.StandBy;
     }
+    
     private void startup() {
         //Start the elevators
         for(Elevator e: elevatorList.values()){
@@ -98,6 +106,7 @@ public class ElevatorSubsystem implements Runnable {
         }
         this.status = ElevatorSubsystemState.StandBy;
     }
+    
     private void dispatchNewJob() {
         ElevatorEvent job  =  jobQueue.poll();
         if(job == null) return;
