@@ -159,7 +159,6 @@ public class GUI {
             elevInfo[elevatorNum][3].setText("Doors: STUCK");
         }
         else if(status == Status.Closed) {
-            elevInfo[elevatorNum][2].setText("Requests: IDLE");
             elevInfo[elevatorNum][3].setText("Doors: CLOSED");
         }
     }
