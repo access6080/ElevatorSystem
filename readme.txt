@@ -17,11 +17,11 @@ Elevator.java                        ElevatorSystem.java
 ElevatorEvent.java                   ElevatorSystemComponent.java
 ElevatorEventTest.java               ElevatorTest.java
 ElevatorRequest.java                 FloorSubSystem.java
-ElevatorRequestTest.java             FloorSubSystemTest.java                         
+ElevatorRequestTest.java             FloorSubSystemTest.java   
 Message.java                         Logger.java
 MessageQueue.java                    Scheduler.java  
 MessageQueueTest.java                SchedulerTest.java
-MessageTest.java
+MessageTest.java                     GUI.java
 data.txt
 
 
