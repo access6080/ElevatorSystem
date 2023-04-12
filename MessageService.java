@@ -45,7 +45,7 @@ public class MessageService extends MessageQueue {
             throw new RuntimeException(e);
         }
 
-        printMessageInformation(sendPacket, true);
+//        printMessageInformation(sendPacket, true);
 
         try {
             clientSocket.send(sendPacket);
@@ -69,7 +69,7 @@ public class MessageService extends MessageQueue {
             throw new RuntimeException(e);
         }
 
-        printMessageInformation(receivePacket, false);
+//        printMessageInformation(receivePacket, false);
 
         Message msg;
         try {
@@ -150,7 +150,6 @@ public class MessageService extends MessageQueue {
         // Add Separator
         message.add(sep);
 
-
         // add Data
         switch (msg.type()){
             case Job -> {
@@ -172,9 +171,27 @@ public class MessageService extends MessageQueue {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-
             }
 
+            case ElevatorJobComplete -> {
+                ElevatorUpdate update = (ElevatorUpdate) msg.data();
+                try {
+                    byte[] data = serializeData(update);
+                    addToMessage(message, sep, data);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            case ArrivalSensorActivated -> {
+                ElevatorRequest req = (ElevatorRequest) msg.data();
+                try {
+                    byte[] data = serializeData(req);
+                    addToMessage(message, sep, data);
+                }  catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
         return getByteArray(message);
@@ -234,7 +251,8 @@ public class MessageService extends MessageQueue {
 
         if(MessageType.values()[type].equals(MessageType.Job) ||
                 MessageType.values()[type].equals(MessageType.Function_Response) ||
-                MessageType.values()[type].equals(MessageType.ArrivalSensorActivated)){
+                MessageType.values()[type].equals(MessageType.ArrivalSensorActivated) ||
+                MessageType.values()[type].equals(MessageType.ElevatorJobComplete)){
             int messageStart = 8 + len;
             byte[] lengthOfData = Arrays.copyOfRange(arr, 8, messageStart);
             int dataLength = Integer.parseInt(new String(lengthOfData));

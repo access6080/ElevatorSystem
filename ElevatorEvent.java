@@ -1,7 +1,5 @@
 import java.io.Serial;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -13,31 +11,35 @@ import java.util.Objects;
 public final class ElevatorEvent implements Serializable {
     @Serial
     private static final long serialVersionUID = 0L;
-    private Date time;
-    private int currentFloor;
+    private long time;
+    private final int currentFloor;
     private final int carButton;
     private FloorSubSystem.FloorButton floorButton;
     private int elevatorNum;
+    private FloorSubSystem.Fault fault;
 
     /**
      * @param time         the time it takes for the simulation to occur.
      * @param currentFloor the current floor of the elevator in the simulation.
      * @param carButton    the number of the next floor the elevator goes to.
      */
-    public ElevatorEvent(Date time, int currentFloor, FloorSubSystem.FloorButton floorButton, int carButton) {
+    public ElevatorEvent(long time, int currentFloor, FloorSubSystem.FloorButton floorButton, int carButton,
+                         FloorSubSystem.Fault fault) {
         this.time = time;
         this.currentFloor = currentFloor;
         this.carButton = carButton;
         this.floorButton = floorButton;
+        this.fault = fault;
     }
 
-    public ElevatorEvent(int elevatorNum,  int requestFloor) {
+    public ElevatorEvent(int elevatorNum, int currentFloor, int requestFloor, FloorSubSystem.Fault fault) {
         this.carButton = requestFloor;
         this.elevatorNum = elevatorNum;
-
+        this.currentFloor = currentFloor;
+        this.fault = fault;
     }
 
-    public Date time() {
+    public long time() {
         return time;
     }
 
@@ -57,6 +59,10 @@ public final class ElevatorEvent implements Serializable {
         return elevatorNum;
     }
 
+    public FloorSubSystem.Fault fault() {
+        return fault;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
@@ -65,18 +71,5 @@ public final class ElevatorEvent implements Serializable {
         return Objects.equals(this.time, that.time) &&
                 this.currentFloor == that.currentFloor &&
                 this.carButton == that.carButton;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(time, currentFloor, carButton);
-    }
-
-    @Override
-    public String toString() {
-        return "ElevatorEvent[" +
-                "time=" + time + ", " +
-                "currentFloor=" + currentFloor + ", " +
-                "button=" + carButton + ']';
     }
 }

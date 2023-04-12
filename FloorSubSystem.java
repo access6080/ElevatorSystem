@@ -4,10 +4,7 @@ import java.net.SocketException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  *this class reads the text file that contains all the data pertaining to the time, floor and button(floor to achieve)
@@ -20,12 +17,19 @@ import java.util.Scanner;
 public class FloorSubSystem{
     private final Logger logger;
     public static int PRIORITY = -1;
+    private static final DateFormat FORMAT = new SimpleDateFormat("HH:mm:ss");
+    private static final Calendar CALENDAR = Calendar.getInstance();
     private final MessageService service;
     DatagramSocket sendAndReceive;
 
     public enum FloorButton {
         UP,
         DOWN
+    }
+
+    public enum Fault {
+        TRANSIENT,
+        NONE, HARD
     }
 
     public FloorSubSystem() {
@@ -57,24 +61,31 @@ public class FloorSubSystem{
             int floor = Integer.parseInt(lineArray[1]);
             FloorButton floorButton = getFloorButton(lineArray[2]);
             int carButton = Integer.parseInt(lineArray[3]);
+            Fault fault = getFault(lineArray[4]);
 
-            DateFormat dateFormat = new SimpleDateFormat("hh:mm:ss");
-            Date dateTime  = null;
+            Date dateTime;
             try {
-                dateTime = dateFormat.parse(time);
+                dateTime = getDate(time);
             } catch (ParseException e) {
                 throw new RuntimeException(e);
             }
 
-
-            logger.info("Received event request with time " + time + " on floor "
-                        + floor + " going " + floorButton  + " to requested floor " + carButton);
-
-            ElevatorEvent event = new ElevatorEvent(dateTime, floor, floorButton, carButton);
+            ElevatorEvent event = new ElevatorEvent(dateTime.getTime(), floor, floorButton, carButton, fault);
             Message msg = new Message(ElevatorSystemComponent.FloorSubSystem, ElevatorSystemComponent.Scheduler,
                     event, MessageType.Job);
-            service.send(msg);
-            logger.info("Data sent to Scheduler");
+
+            Timer  jobTImer = new Timer();
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    service.send(msg);
+                    logger.info("Data sent to Scheduler\n");
+                }
+            };
+            jobTImer.schedule(task, dateTime);
+
+            logger.info("Received event request with time " + dateTime + "( " + dateTime.getTime() + " millis )"
+                    + " on floor " + floor + " going " + floorButton  + " to requested floor " + carButton);
         }
     }
 
@@ -83,13 +94,26 @@ public class FloorSubSystem{
             case "UP" -> {
                 return FloorButton.UP;
             }
-            case "Down" -> {
+            case "DOWN" -> {
                 return FloorButton.DOWN;
             }
             default -> throw new IllegalArgumentException("Illegal Argument");
         }
+    }
 
-}
+    private Fault getFault(String fault){
+        switch (fault){
+            case "TRANSIENT" -> {
+                return Fault.TRANSIENT;
+            }
+            case "HARD" -> {
+                return Fault.HARD;
+            }
+            default -> {
+                return Fault.NONE;
+            }
+        }
+    }
 
 
     /**
@@ -105,16 +129,26 @@ public class FloorSubSystem{
             throw new RuntimeException(e);
         }
 
-        while(true) {
+        while(Thread.currentThread().isAlive()) {
             Message msg = this.service.receive();
             processMessages(msg);
         }
     }
 
+    private Date getDate(String time) throws ParseException {
+        Date date = FORMAT.parse(time);
+        CALENDAR.setTime(date);
+        Calendar today = Calendar.getInstance();
+        CALENDAR.set(Calendar.YEAR, today.get(Calendar.YEAR));
+        CALENDAR.set(Calendar.MONTH, today.get(Calendar.MONTH));
+        CALENDAR.set(Calendar.DAY_OF_MONTH, today.get(Calendar.DAY_OF_MONTH));
+        return CALENDAR.getTime();
+    }
+
     public void processMessages(Message msg) {
         if(msg.type().equals(MessageType.ArrivalSensorActivated)){
             ElevatorRequest req = (ElevatorRequest) msg.data();
-            logger.info("Elevator " + req.elevatorNum() + "reached floor " + req.floor());
+            logger.info("Elevator " + req.elevatorNum() + " reached floor " + req.floor());
         } else if (msg.type().equals(MessageType.ElevatorJobComplete)) {
             ElevatorUpdate data = (ElevatorUpdate) msg.data();
             logger.info("Elevator " + data.elevatorNum() + " completed Job");

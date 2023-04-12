@@ -174,4 +174,8 @@ public class GUI {
     public void setRequest(int elevatorNum, String request){
         elevInfo[elevatorNum][2].setText("Requests: " + request);
     }
+
+    public static void main(String[] args) {
+        new GUI();
+    }
 }

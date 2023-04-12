@@ -17,11 +17,11 @@ Elevator.java                        ElevatorSystem.java
 ElevatorEvent.java                   ElevatorSystemComponent.java
 ElevatorEventTest.java               ElevatorTest.java
 ElevatorRequest.java                 FloorSubSystem.java
-ElevatorRequestTest.java             FloorSubSystemTest.java   
+ElevatorRequestTest.java             FloorSubSystemTest.java                         
 Message.java                         Logger.java
 MessageQueue.java                    Scheduler.java  
 MessageQueueTest.java                SchedulerTest.java
-MessageTest.java                     GUI.java
+MessageTest.java
 data.txt
 
 
@@ -57,6 +57,5 @@ Eid, Saad
 -Elevator.java
 -ElevatorTest.java
 -ElevatorSubSystem.java
--GUI.java
 
 copyrights belong to SYSC 3303 Group 4 2023

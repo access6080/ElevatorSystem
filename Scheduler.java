@@ -1,11 +1,7 @@
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Queue;
 
 /**
  * The Scheduler class models the Scheduler component of the  Elevator system.
@@ -19,29 +15,26 @@ import java.util.Queue;
 public class Scheduler {
     /** The message queue through which the scheduler receives and sends messages */
     private final MessageQueue messageQueue;
-
     /** The priority of the scheduler */
     public static final int PRIORITY = 0;
-
     /** FIFO Queue for elevator jobs */
     private final LinkedList<ElevatorEvent> jobQueue;
-
     /** Logger for logging events **/
     private final Logger logger;
-
+    /** The current State of the Scheduler **/
     private SchedulerState status;
-
+    /** THe Scheduling Algorithm being used **/
     private SchedulerAlgorithm algorithm;
-
+    /** The service used for UDP messaging **/
     private MessageService service;
-
+    /** The various states of the Scheduler **/
     public enum SchedulerState{
-        START, AWAITING_ELEVATOR_STATE, STANDBY, RECEIVING_FROM_FLOOR_SUBSYSTEM
+        START, STANDBY, RECEIVING_FROM_FLOOR_SUBSYSTEM
     }
-
+    /**The location os each elevator at any given point **/
     private HashMap<Integer, Integer> elevatorLocations;
 
-    private final long startTime;
+    private HashMap<Integer, Boolean> elevatorStatuses;
 
     /**
      * The constructor of the scheduler class.
@@ -55,18 +48,19 @@ public class Scheduler {
         this.jobQueue = new LinkedList<>();
         this.logger = new Logger();
         this.status = SchedulerState.START;
-        this.startTime = System.currentTimeMillis();
     }
 
+    /**
+     * The constructor of the scheduler class.
+     */
     public Scheduler() {
         this.messageQueue = new MessageQueue();
-
         this.jobQueue = new LinkedList<>();
         this.logger = new Logger();
         this.status = SchedulerState.START;
-        this.elevatorLocations = getElevatorLocations();
+        this.elevatorLocations = initializeElevatorLocations();
+        this.elevatorStatuses  = initializeElevatorStatus();
         this.algorithm = new SchedulerAlgorithm();
-        this.startTime = System.currentTimeMillis();
 
         DatagramSocket sendReceiveSocket;
         try {
@@ -78,46 +72,40 @@ public class Scheduler {
         this.service =  new MessageService(sendReceiveSocket,  ElevatorSystemComponent.Scheduler);
     }
 
-
-
     /**
      * This method checks the message queue for messages sent to the scheduler.
      * Based on the sender of the message, the scheduler either adds a job (ElevatorEvent object)
      * to the job queue or removes and sends a Job to the elevator component of the system.
      *
-     * @param msg The message received by the scheduler.
      */
-    public void eventOccurred(Message msg) {
-            if(msg.sender().equals(ElevatorSystemComponent.FloorSubSystem) && !this.status.equals(SchedulerState.START))
+    public void checkIfEventOccurred() {
+        if(messageQueue.hasAMessage(PRIORITY)){
+            logger.info("Event Occurred\n");
+
+            Message msg;
+            try {
+                msg = messageQueue.getMessage(PRIORITY);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (msg.sender().equals(ElevatorSystemComponent.FloorSubSystem))
                 this.status = SchedulerState.RECEIVING_FROM_FLOOR_SUBSYSTEM;
 
-            if(msg.sender().equals(ElevatorSystemComponent.ElevatorSubSystem) && msg.type() == MessageType.Function_Response)
-               this.status = SchedulerState.AWAITING_ELEVATOR_STATE;
 
-            switch(status){
-                case START -> {
-                    if(msg.sender().equals(ElevatorSystemComponent.FloorSubSystem)){
-                        scheduleJob((ElevatorEvent) msg.data());
-                    }
-                    this.status  = SchedulerState.STANDBY;
-                }
+            switch (status) {
+                case START -> this.status = SchedulerState.STANDBY;
 
                 case STANDBY -> {
                     switch (msg.type()) {
                         case Job -> this.status = SchedulerState.RECEIVING_FROM_FLOOR_SUBSYSTEM;
-                        case Function_Response -> this.status = SchedulerState.AWAITING_ELEVATOR_STATE;
-                        case ElevatorJobComplete, ArrivalSensorActivated -> handleMessageUpdate(msg);
+                        case ElevatorJobComplete, ArrivalSensorActivated, Hard_Fault -> handleMessageUpdate(msg);
                     }
                 }
 
-                case AWAITING_ELEVATOR_STATE -> {
-                    if(msg.sender().equals(ElevatorSystemComponent.ElevatorSubSystem)){
-                        handleFunctionResponse((ElevatorStatus) msg.data());
-                    }
-                }
-
-                case RECEIVING_FROM_FLOOR_SUBSYSTEM -> scheduleJob((ElevatorEvent) msg.data());
+                case RECEIVING_FROM_FLOOR_SUBSYSTEM -> AcceptJob((ElevatorEvent) msg.data());
             }
+        }
     }
 
     private void handleMessageUpdate(Message msg) {
@@ -125,6 +113,7 @@ public class Scheduler {
             case ElevatorJobComplete -> {
                 ElevatorUpdate data = (ElevatorUpdate) msg.data();
                 logger.info("Elevator " + data.elevatorNum() + " completed Job");
+                this.elevatorStatuses.put(data.elevatorNum(), true);
                 Message newMsg = new Message(ElevatorSystemComponent.Scheduler, ElevatorSystemComponent.FloorSubSystem,
                         data, MessageType.ElevatorJobComplete);
 
@@ -133,68 +122,74 @@ public class Scheduler {
             }
             case ArrivalSensorActivated -> {
                 ElevatorRequest req = (ElevatorRequest) msg.data();
+                logger.info("Elevator " + req.elevatorNum() + "  arrived to floor "  + req.floor());
                 this.elevatorLocations.put(req.elevatorNum(), req.floor());
+
 
                 this.service.send(new Message(ElevatorSystemComponent.Scheduler, ElevatorSystemComponent.FloorSubSystem,
                         req, MessageType.ArrivalSensorActivated));
                 logger.info("Message Sent to FloorSubsystem");
             }
-            case Status_Update -> {
-
+            case Hard_Fault -> {
+                int elevatorNum = (int) msg.data();
+                logger.info("Elevator " + elevatorNum  + " is Out of Service");
+                this.elevatorStatuses.remove(elevatorNum);
+                this.elevatorLocations.remove(elevatorNum);
             }
         }
     }
 
-    private HashMap<Integer, Integer> getElevatorLocations() {
+    /**
+     * This method initializes the locations of each elevator.
+     *
+     * @return A HashMap containing the location  of each elevator.
+     */
+    private HashMap<Integer, Integer> initializeElevatorLocations() {
         HashMap<Integer, Integer> map = new HashMap<>();
 
-        for (int i = 1; i < 5; i++) {
+        for (int i = 1; i < UtilityInformation.NUMBER_OF_ELEVATORS + 1; i++) {
             map.put(i, 1);
         }
 
         return map;
     }
 
-    private void handleFunctionResponse(ElevatorStatus data) {
-        logger.info("Received Elevator Status");
+    private HashMap<Integer, Boolean> initializeElevatorStatus() {
+        HashMap<Integer, Boolean> status = new HashMap<>();
 
-        HashMap<Integer, Boolean> elevatorStatuses = data.status();
-        ElevatorEvent job = jobQueue.poll();
-        if(job == null) return;
+        for(int i = 1; i < UtilityInformation.NUMBER_OF_ELEVATORS + 1; i++ ){
+            status.put(i, true);
+        }
 
-        int bestElevator = algorithm.getBestCarToServiceJob(elevatorStatuses, elevatorLocations, job);
-        ElevatorEvent newJob = new ElevatorEvent(bestElevator, job.carButton());
+        return status;
+    }
 
-        logger.info("Sending new job to elevator " + bestElevator);
-        Message message = new Message(ElevatorSystemComponent.Scheduler,
-                ElevatorSystemComponent.ElevatorSubSystem, newJob, MessageType.Job);
-        this.service.send(message);
+    private void scheduleJob() {
+        while(!jobQueue.isEmpty()) {
+            ElevatorEvent job = jobQueue.poll();
+            int bestElevator = algorithm.getBestCarToServiceJob(elevatorStatuses, elevatorLocations, job);
+            elevatorStatuses.put(bestElevator, false);
+            ElevatorEvent newJob = new ElevatorEvent(bestElevator, job.currentFloor(), job.carButton(), job.fault());
+
+            logger.info("Sending new job to elevator " + bestElevator);
+            Message message = new Message(ElevatorSystemComponent.Scheduler,
+                    ElevatorSystemComponent.ElevatorSubSystem, newJob, MessageType.Job);
+            this.service.send(message);
+        }
 
         this.status = SchedulerState.STANDBY;
     }
 
-    private void scheduleJob(ElevatorEvent data) {
-        logger.info("Received a message from Floor Subsystem");
-
-        jobQueue.addLast(data);
-
-        logger.info("Checking if Elevator is idle");
-
-        Message msg = new Message(ElevatorSystemComponent.Scheduler, ElevatorSystemComponent.ElevatorSubSystem,
-                null, MessageType.Function_Request);
-        this.service.send(msg);
-
-        this.status = SchedulerState.AWAITING_ELEVATOR_STATE;
-    }
-
     /**
-     * This method returns the time difference between the time the system starts and
-     * the time the message enters the system.
-     * @param time the time the message enters the system
-     * @return the time difference in long format
+     * This method receives a job from the floor subsystem and schedules it.
+     * @param data The job received from the floor subsystem
      */
-    public long getTime(long time){
-        return time - startTime;
+    private void AcceptJob(ElevatorEvent data) {
+        logger.info("Received a message from floor sub system with data: " + data);
+        jobQueue.add(data);
+
+        scheduleJob();
+        this.status = SchedulerState.STANDBY;
     }
 
     /**
@@ -203,10 +198,17 @@ public class Scheduler {
      */
     public void run() {
         logger.info("Scheduler Service Started");
-        while(true) {
-            logger.info("Awaiting message...");
-            Message msg = service.receive();
-            eventOccurred(msg);
+        Thread messageReceiver = new Thread(() -> {
+            while(true){
+                logger.info("Awaiting message...");
+                Message msg = service.receive();
+                this.messageQueue.addMessage(new Message(PRIORITY, msg.sender(),  msg.data(), msg.type()));
+            }
+        },  "Message Receiver");
+        messageReceiver.start();
+
+        while(Thread.currentThread().isAlive()) {
+            checkIfEventOccurred();
         }
     }
 

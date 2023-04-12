@@ -6,11 +6,12 @@
  */
 public class Door {
     public enum DoorState{OPEN, MOVING, CLOSED, STUCK}
-
+    private final Logger logger;
     private DoorState status;
 
     public Door(){
         this.status = DoorState.CLOSED;
+        this.logger = new Logger();
     }
 
     /**
@@ -25,6 +26,7 @@ public class Door {
      * This method sets the status of the door to OPEN.
      */
     public void openDoor(){
+        logger.info("Doors Open");
         status = DoorState.OPEN;
     }
 
@@ -32,7 +34,16 @@ public class Door {
      * This method sets the status of the door to CLOSED.
      */
     public void closeDoor(){
+        logger.info("Doors Closed");
         status = DoorState.CLOSED;
+    }
+
+    /**
+     * This method sets the status of the door to STUCK.
+     */
+    public void breakDoor(){
+        this.status = DoorState.STUCK;
+        logger.info("Doors Stuck");
     }
 
     /**
@@ -40,12 +51,5 @@ public class Door {
      */
     public void doorMoving(){
         status = DoorState.MOVING;
-    }
-
-    /**
-     * This method sets the status of the door to STUCK.
-     */
-    public void doorStuck() {
-        status = DoorState.STUCK;
     }
 }

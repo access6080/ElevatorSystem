@@ -6,5 +6,6 @@ public enum MessageType {
         Elevator_Job,
         ArrivalSensorActivated,
         ElevatorJobComplete,
-        Status_Update
+        Status_Update,
+        Hard_Fault
 }

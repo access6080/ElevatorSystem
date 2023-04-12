@@ -75,11 +75,9 @@ public class MessageQueue {
      */
     public synchronized void addMessage(Message m){
         if(m.priority() == Scheduler.PRIORITY) this.schedulerList.addLast(m);
-
-        if(m.priority() > Scheduler.PRIORITY) this.elevatorList.get(m.priority()).addLast(m);
-
         if(m.priority() == FloorSubSystem.PRIORITY) this.floorSubsystemList.addLast(m);
         if(m.priority() == ElevatorSubsystem.PRIORITY) this.elevatorSubsystemList.addLast(m);
+        if(m.priority() > Scheduler.PRIORITY) this.elevatorList.get(m.priority()).addLast(m);
     }
 
     /**
