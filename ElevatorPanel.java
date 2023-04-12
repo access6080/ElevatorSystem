@@ -19,19 +19,33 @@ public class ElevatorPanel extends JPanel {
         idleStatePanel.add(new JLabel("Idle Status"));
 
         this.idleState = new JButton();
-        idleState.setBackground(Color.RED);
+        idleState.setBackground(Color.yellow);
         idleStatePanel.add(idleState);
-        this.add(idleState, BorderLayout.CENTER);
+        this.add(idleStatePanel, BorderLayout.CENTER);
 
 
         this.currentFloorPanel = new JPanel();
         currentFloorPanel.setLayout(new BoxLayout(currentFloorPanel, BoxLayout.Y_AXIS));
-        currentFloorPanel.setBorder(new EmptyBorder(0,50,0,0));
+        currentFloorPanel.setBorder(new EmptyBorder(0,0,0,130));
         currentFloorPanel.add(new JLabel("Current floor"));
 
 
         currentFloor = new JButton("1");
         currentFloorPanel.add(currentFloor);
-        this.add(currentFloor, BorderLayout.CENTER);
+        this.add(currentFloorPanel, BorderLayout.EAST);
+        this.setBorder(new EmptyBorder(5, 20,5,10));
+   }
+
+    public void changeIdleStatus(int status){
+        switch(status){
+            case 0: setBackground(Color.YELLOW);
+            case 1:setBackground(Color.GREEN);
+            case 2:setBackground(Color.RED);
+        }
     }
+
+    public void updateCurrentFloor(int currentFloor){
+        this.currentFloor.setText(String.valueOf(currentFloor));
+    }
+
 }

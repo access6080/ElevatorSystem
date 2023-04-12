@@ -12,6 +12,8 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
     private JPanel schedulerControlPanel;
     private JPanel elevatorSubSystemControlPanel;
     private FloorPanel[] floorPanels;
+    private ElevatorPanel[] elevatorPanels;
+    private JPanel schedulerOutputPanel;
 
     public ElevatorSystemFrame() {
         String[] options = {"Default Values", "Custom values"};
@@ -41,8 +43,7 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setResizable(false);
-        setVisible(true);
-        this.pack();
+
 
         this.floorSubSystemControlPanel = new JPanel(new BorderLayout());
         floorSubSystemControlPanel.setBorder( BorderFactory.createLineBorder(Color.black));
@@ -69,10 +70,24 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
         elevatorSubSystemControlPanel.setPreferredSize(new Dimension(500, 350));
         elevatorSubSystemControlPanel.add(new JLabel("Elevator Subsystem", SwingConstants.CENTER), BorderLayout.NORTH);
 
+        JPanel elevatorList = new JPanel();
+        elevatorList.setLayout(new BoxLayout(elevatorList, BoxLayout.Y_AXIS));
+
+        elevatorPanels = new ElevatorPanel[elevNum + 1];
+        for(int i = 1; i < (elevNum + 1); i++){
+            ElevatorPanel p = new ElevatorPanel(i);
+            elevatorPanels[i] = p;
+            elevatorList.add(p);
+        }
+        elevatorSubSystemControlPanel.add(new JScrollPane(elevatorList), BorderLayout.CENTER);
+
         this.schedulerControlPanel =  new JPanel(new BorderLayout());
         schedulerControlPanel.setBorder(new LineBorder(Color.BLACK));
         schedulerControlPanel.setPreferredSize(new Dimension(500, 400));
         schedulerControlPanel.add(new JLabel("Scheduler", SwingConstants.CENTER), BorderLayout.PAGE_START);
+
+        schedulerOutputPanel = new JPanel();
+        schedulerOutputPanel.setLayout(new BoxLayout(schedulerOutputPanel, BoxLayout.Y_AXIS));
 
 
         JPanel rightPanel = new JPanel(new BorderLayout());
@@ -83,9 +98,14 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
 
 
         this.add(rightPanel, BorderLayout.LINE_END);
-
+        setVisible(true);
+        this.pack();
     }
 
+    public void addLog(String log){
+        schedulerOutputPanel.add(new JLabel(log));
+    }
+    
     public static void main(String[] args) {
         new ElevatorSystemFrame();
     }

@@ -29,7 +29,7 @@ public class FloorPanel extends JPanel {
         floorLampPanel.add(new JLabel("Floor Lamp"));
 
         this.floorLamp = new JButton();
-        floorLamp.setBackground(Color.yellow);
+        floorLamp.setBackground(Color.red);
         floorLampPanel.add(floorLamp);
         this.add(floorLampPanel, BorderLayout.EAST);
 
@@ -45,10 +45,10 @@ public class FloorPanel extends JPanel {
     }
 
     public void toggleFloorLamp(){
-        if(floorLamp.getBackground() == Color.YELLOW){
+        if(floorLamp.getBackground() == Color.red){
             floorLamp.setBackground(Color.GREEN);
         } else {
-            floorLamp.setBackground(Color.YELLOW);
+            floorLamp.setBackground(Color.red);
         }
     }
 
