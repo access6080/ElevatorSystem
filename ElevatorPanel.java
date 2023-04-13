@@ -7,6 +7,7 @@ public class ElevatorPanel extends JPanel {
     private JPanel currentFloorPanel;
     private JButton idleState;
     private JButton currentFloor;
+    public enum elevatorIdleState{IDLE,NOT_IDLE,BROKEN}
 
 
     public ElevatorPanel(int number) {
@@ -36,11 +37,11 @@ public class ElevatorPanel extends JPanel {
         this.setBorder(new EmptyBorder(5, 20,5,10));
    }
 
-    public void changeIdleStatus(int status){
-        switch(status){
-            case 0: setBackground(Color.YELLOW);
-            case 1:setBackground(Color.GREEN);
-            case 2:setBackground(Color.RED);
+    public void changeIdleStatus(elevatorIdleState state){
+        switch(state){
+            case IDLE: setBackground(Color.YELLOW);
+            case NOT_IDLE:setBackground(Color.GREEN);
+            case BROKEN:setBackground(Color.RED);
         }
     }
 

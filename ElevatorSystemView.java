@@ -1,5 +1,5 @@
 public interface ElevatorSystemView {
 
-    public void update();
+    public void update(ElevatorSystemEvent event);
 
 }

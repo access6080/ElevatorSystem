@@ -22,6 +22,10 @@ public class FloorSubSystem{
     private final MessageService service;
     DatagramSocket sendAndReceive;
 
+    private ArrayList<ElevatorSystemView> views;
+    private ArrayList<Floor> floors;
+    private String filename;
+
     public enum FloorButton {
         UP,
         DOWN
@@ -32,7 +36,7 @@ public class FloorSubSystem{
         NONE, HARD
     }
 
-    public FloorSubSystem() {
+    public FloorSubSystem(String filename) {
         this.logger = new Logger();
         try {
             sendAndReceive = new DatagramSocket(3001);
@@ -40,6 +44,19 @@ public class FloorSubSystem{
             throw new RuntimeException(e);
         }
         this.service = new MessageService(sendAndReceive, ElevatorSystemComponent.FloorSubSystem);
+        views = new ArrayList<>();
+        floors = populateFloors();
+        this.filename = filename;
+    }
+
+    private ArrayList<Floor> populateFloors() {
+        ArrayList<Floor> list = new ArrayList<>();
+
+        for (int i = 1; i < UtilityInformation.NUMBER_OF_FLOORS + 1 ; i++) {
+            list.add(new Floor(i));
+
+        }
+        return list;
     }
 
     /**
@@ -73,6 +90,8 @@ public class FloorSubSystem{
             ElevatorEvent event = new ElevatorEvent(dateTime.getTime(), floor, floorButton, carButton, fault);
             Message msg = new Message(ElevatorSystemComponent.FloorSubSystem, ElevatorSystemComponent.Scheduler,
                     event, MessageType.Job);
+
+            toggleDirectionLamp(floor);
 
             Timer  jobTImer = new Timer();
             TimerTask task = new TimerTask() {
@@ -124,7 +143,7 @@ public class FloorSubSystem{
     public void run() {
         logger.info("Floor Subsystem Started");
         try {
-            getData("data.txt");
+            getData(this.filename);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -148,15 +167,66 @@ public class FloorSubSystem{
     public void processMessages(Message msg) {
         if(msg.type().equals(MessageType.ArrivalSensorActivated)){
             ElevatorRequest req = (ElevatorRequest) msg.data();
+            updateViews(new ElevatorSystemEvent(req.elevatorNum(),req.floor(),
+                    ElevatorSystemEvent.EventType.UpdateFloorNumber));
             logger.info("Elevator " + req.elevatorNum() + " reached floor " + req.floor());
         } else if (msg.type().equals(MessageType.ElevatorJobComplete)) {
             ElevatorUpdate data = (ElevatorUpdate) msg.data();
+            toggleFloorLamp(data.elevatorNum());
             logger.info("Elevator " + data.elevatorNum() + " completed Job");
         }
     }
 
+
+    private void toggleFloorLamp(int floorNum) {
+        for (Floor f: floors) {
+            if (f.getFloorNum()==floorNum){
+                f.toggleFloorLamp();
+                updateViews(new ElevatorSystemEvent(f.getFloorNum(),f.getFloorLampState(),ElevatorSystemEvent.EventType.ToggleFloorLamp));
+                Timer floorLampTimer = new Timer();
+                TimerTask task = new TimerTask() {
+                    @Override
+                    public void run() {
+                        f.toggleFloorLamp();
+                        updateViews(new ElevatorSystemEvent(f.getFloorNum(),f.getFloorLampState(),ElevatorSystemEvent.EventType.ToggleFloorLamp));
+                    }
+                };
+                floorLampTimer.schedule(task,2000);
+            }
+        }
+
+    }
+
+    private void toggleDirectionLamp(int floorNum) {
+        for (Floor f: floors) {
+            if (f.getFloorNum()==floorNum){
+                f.toggleDirectionLamp();
+                updateViews(new ElevatorSystemEvent(f.getFloorNum(),f.getDirectionLampState(),ElevatorSystemEvent.EventType.ToggleDirectionLamp));
+                Timer floorDirectionTimer = new Timer();
+                TimerTask task = new TimerTask() {
+                    @Override
+                    public void run() {
+                        f.toggleDirectionLamp();
+                        updateViews(new ElevatorSystemEvent(f.getFloorNum(),f.getDirectionLampState(),ElevatorSystemEvent.EventType.ToggleDirectionLamp));
+                    }
+                };
+                floorDirectionTimer.schedule(task,2000);
+            }
+        }
+
+    }
+    public void updateViews(ElevatorSystemEvent event ){
+        for (ElevatorSystemView v: views) {
+            v.update(event);
+        }
+    }
+
+    public void addView(ElevatorSystemView view){
+        this.views.add(view);
+    }
+
     public static void main(String[] args) {
-        FloorSubSystem floorSubSystem = new FloorSubSystem();
+        FloorSubSystem floorSubSystem = new FloorSubSystem("normal.txt");
         floorSubSystem.run();
 
     }

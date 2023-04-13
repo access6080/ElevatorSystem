@@ -8,9 +8,6 @@ import java.awt.*;
 public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
     private int floorNum;
     private int elevNum;
-    private JPanel floorSubSystemControlPanel;
-    private JPanel schedulerControlPanel;
-    private JPanel elevatorSubSystemControlPanel;
     private FloorPanel[] floorPanels;
     private ElevatorPanel[] elevatorPanels;
     private JPanel schedulerOutputPanel;
@@ -47,19 +44,22 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
         // create and add the "Start" menu
         JMenu startMenu = new JMenu("Start");
         JMenuItem startItem = new JMenuItem("Start");
+        startItem.addActionListener(e -> simulateNormalOperation());
 
         startMenu.add(startItem);
 
         // create and add the "Simulate Transient" menu
         JMenu simulateTransientMenu = new JMenu("Transient Fault");
         JMenuItem simulateTransientItem = new JMenuItem("Simulate Transient Fault");
+        simulateTransientItem.addActionListener(e -> simulateTransientFault());
 
         simulateTransientMenu.add(simulateTransientItem);
 
         // create and add the "Simulate Hard Fault" menu
         JMenu simulateHardFaultMenu = new JMenu("Hard Fault");
         JMenuItem simulateHardFaultItem = new JMenuItem("Simulate Hard Fault");
-        
+        simulateHardFaultItem.addActionListener(e -> simulateHardFault());
+
         simulateHardFaultMenu.add(simulateHardFaultItem);
 
         // create the menu bar and add the menus to it
@@ -71,7 +71,8 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
         // add the menu bar to the frame
         setJMenuBar(menuBar);
 
-        this.floorSubSystemControlPanel = new JPanel(new BorderLayout());
+
+        JPanel floorSubSystemControlPanel = new JPanel(new BorderLayout());
         floorSubSystemControlPanel.setBorder( BorderFactory.createLineBorder(Color.black));
         floorSubSystemControlPanel.setPreferredSize(new Dimension(500, 800));
         this.add(floorSubSystemControlPanel, BorderLayout.LINE_START);
@@ -90,8 +91,7 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
         floorSubSystemControlPanel.add(new JScrollPane(floorList), BorderLayout.CENTER);
 
 
-
-        this.elevatorSubSystemControlPanel =  new JPanel(new BorderLayout());
+        JPanel elevatorSubSystemControlPanel = new JPanel(new BorderLayout());
         elevatorSubSystemControlPanel.setBorder(new LineBorder(Color.BLACK));
         elevatorSubSystemControlPanel.setPreferredSize(new Dimension(500, 350));
         elevatorSubSystemControlPanel.add(new JLabel("Elevator Subsystem", SwingConstants.CENTER), BorderLayout.NORTH);
@@ -107,14 +107,14 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
         }
         elevatorSubSystemControlPanel.add(new JScrollPane(elevatorList), BorderLayout.CENTER);
 
-        this.schedulerControlPanel =  new JPanel(new BorderLayout());
+        JPanel schedulerControlPanel = new JPanel(new BorderLayout());
         schedulerControlPanel.setBorder(new LineBorder(Color.BLACK));
         schedulerControlPanel.setPreferredSize(new Dimension(500, 400));
         schedulerControlPanel.add(new JLabel("Scheduler", SwingConstants.CENTER), BorderLayout.PAGE_START);
 
         schedulerOutputPanel = new JPanel();
         schedulerOutputPanel.setLayout(new BoxLayout(schedulerOutputPanel, BoxLayout.Y_AXIS));
-
+        schedulerControlPanel.add(new JScrollPane(schedulerOutputPanel),BorderLayout.CENTER);
 
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(new LineBorder(Color.BLACK));
@@ -137,7 +137,47 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
     }
 
     @Override
-    public void update() {}
+    public void update(ElevatorSystemEvent event) {
+        switch(event.getType()){
+            case ToggleDirectionLamp -> floorPanels[event.getFloorNum()].toggleDirectionLamp();
+            case ToggleFloorLamp -> floorPanels[event.getFloorNum()].toggleFloorLamp();
+            case UpdateFloorNumber -> {
+                elevatorPanels[event.getElevatorNum()].updateCurrentFloor(event.getCurrentFloor());
+                elevatorPanels[event.getElevatorNum()].changeIdleStatus(ElevatorPanel.elevatorIdleState.NOT_IDLE);
+            }
+            case Log -> addLog(event.getLog());
+        }
+    }
+
+    public void simulateNormalOperation(){
+        FloorSubSystem floorsubsystem = new FloorSubSystem("normal.txt");
+        ElevatorSubsystem elevatorsubsystem = new ElevatorSubsystem(floorNum);
+        Scheduler scheduler = new Scheduler();
+
+        floorsubsystem.run();
+        elevatorsubsystem.run();
+        scheduler.run();
+    }
+
+    public void simulateTransientFault(){
+        FloorSubSystem floorsubsystem = new FloorSubSystem("transient.txt");
+        ElevatorSubsystem elevatorsubsystem = new ElevatorSubsystem(floorNum);
+        Scheduler scheduler = new Scheduler();
+
+        floorsubsystem.run();
+        elevatorsubsystem.run();
+        scheduler.run();
+    }
+
+    public void simulateHardFault(){
+        FloorSubSystem floorsubsystem = new FloorSubSystem("Hard.txt");
+        ElevatorSubsystem elevatorsubsystem = new ElevatorSubsystem(floorNum);
+        Scheduler scheduler = new Scheduler();
+
+        floorsubsystem.run();
+        elevatorsubsystem.run();
+        scheduler.run();
+    }
 
 
 }

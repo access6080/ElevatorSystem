@@ -1,5 +1,6 @@
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -35,6 +36,7 @@ public class Scheduler {
     private HashMap<Integer, Integer> elevatorLocations;
 
     private HashMap<Integer, Boolean> elevatorStatuses;
+    public ArrayList<ElevatorSystemView> views;
 
     /**
      * The constructor of the scheduler class.
@@ -70,6 +72,15 @@ public class Scheduler {
         }
 
         this.service =  new MessageService(sendReceiveSocket,  ElevatorSystemComponent.Scheduler);
+    }
+    public void addViews(ElevatorSystemView view){
+        this.views.add(view);
+    }
+
+    public void updateViews(ElevatorSystemEvent event){
+        for (ElevatorSystemView v: views) {
+            v.update(event);
+        }
     }
 
     /**
@@ -113,26 +124,35 @@ public class Scheduler {
             case ElevatorJobComplete -> {
                 ElevatorUpdate data = (ElevatorUpdate) msg.data();
                 logger.info("Elevator " + data.elevatorNum() + " completed Job");
+                updateViews(new ElevatorSystemEvent("Elevator " + data.elevatorNum() + " completed Job",
+                        ElevatorSystemEvent.EventType.Log));
+
                 this.elevatorStatuses.put(data.elevatorNum(), true);
                 Message newMsg = new Message(ElevatorSystemComponent.Scheduler, ElevatorSystemComponent.FloorSubSystem,
                         data, MessageType.ElevatorJobComplete);
 
                 this.service.send(newMsg);
                 logger.info("Message Sent to FloorSubsystem");
+                updateViews(new ElevatorSystemEvent("Message Sent to FloorSubsystem", ElevatorSystemEvent.EventType.Log));
             }
             case ArrivalSensorActivated -> {
                 ElevatorRequest req = (ElevatorRequest) msg.data();
                 logger.info("Elevator " + req.elevatorNum() + "  arrived to floor "  + req.floor());
+                updateViews(new ElevatorSystemEvent("Elevator " + req.elevatorNum() + "  arrived to floor "  + req.floor(),
+                        ElevatorSystemEvent.EventType.Log));
                 this.elevatorLocations.put(req.elevatorNum(), req.floor());
 
 
                 this.service.send(new Message(ElevatorSystemComponent.Scheduler, ElevatorSystemComponent.FloorSubSystem,
                         req, MessageType.ArrivalSensorActivated));
                 logger.info("Message Sent to FloorSubsystem");
+                updateViews(new ElevatorSystemEvent("Message Sent to FloorSubsystem",
+                        ElevatorSystemEvent.EventType.Log));
             }
             case Hard_Fault -> {
                 int elevatorNum = (int) msg.data();
                 logger.info("Elevator " + elevatorNum  + " is Out of Service");
+                updateViews(new ElevatorSystemEvent("Elevator " + elevatorNum  + " is Out of Service", ElevatorSystemEvent.EventType.Log));
                 this.elevatorStatuses.remove(elevatorNum);
                 this.elevatorLocations.remove(elevatorNum);
             }
@@ -172,6 +192,7 @@ public class Scheduler {
             ElevatorEvent newJob = new ElevatorEvent(bestElevator, job.currentFloor(), job.carButton(), job.fault());
 
             logger.info("Sending new job to elevator " + bestElevator);
+            updateViews(new ElevatorSystemEvent("Sending new job to elevator " + bestElevator, ElevatorSystemEvent.EventType.Log));
             Message message = new Message(ElevatorSystemComponent.Scheduler,
                     ElevatorSystemComponent.ElevatorSubSystem, newJob, MessageType.Job);
             this.service.send(message);
@@ -186,6 +207,7 @@ public class Scheduler {
      */
     private void AcceptJob(ElevatorEvent data) {
         logger.info("Received a message from floor sub system with data: " + data);
+        updateViews(new ElevatorSystemEvent("Received a message from floor sub system with data: " + data, ElevatorSystemEvent.EventType.Log));
         jobQueue.add(data);
 
         scheduleJob();
@@ -198,6 +220,7 @@ public class Scheduler {
      */
     public void run() {
         logger.info("Scheduler Service Started");
+        updateViews(new ElevatorSystemEvent("Scheduler Service Started", ElevatorSystemEvent.EventType.Log));
         Thread messageReceiver = new Thread(() -> {
             while(true){
                 logger.info("Awaiting message...");

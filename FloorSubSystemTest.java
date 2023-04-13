@@ -9,13 +9,13 @@ public class FloorSubSystemTest {
 
     @Before
     public void setUp() {
-        floorSubSystem = new FloorSubSystem();
+        floorSubSystem = new FloorSubSystem("normal.txt");
     }
 
     @Test
     public void testGetData() {
         try {
-            floorSubSystem.getData("data.txt");
+            floorSubSystem.getData("normal.txt");
         } catch (FileNotFoundException e) {
             fail("File not found exception thrown");
         }

@@ -1,6 +1,6 @@
 public class ElevatorSystemEvent {
 
-    public enum EventType {ToggleDirectionLamp, ToggleFloorLamp, UpdateFloorNumber}
+    public enum EventType {ToggleDirectionLamp, ToggleFloorLamp, UpdateFloorNumber, Log}
 
     private EventType type;
     private int floorNum;
