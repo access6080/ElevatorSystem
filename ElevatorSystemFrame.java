@@ -44,6 +44,32 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
         setLayout(new BorderLayout());
         setResizable(false);
 
+        // create and add the "Start" menu
+        JMenu startMenu = new JMenu("Start");
+        JMenuItem startItem = new JMenuItem("Start");
+
+        startMenu.add(startItem);
+
+        // create and add the "Simulate Transient" menu
+        JMenu simulateTransientMenu = new JMenu("Transient Fault");
+        JMenuItem simulateTransientItem = new JMenuItem("Simulate Transient Fault");
+
+        simulateTransientMenu.add(simulateTransientItem);
+
+        // create and add the "Simulate Hard Fault" menu
+        JMenu simulateHardFaultMenu = new JMenu("Hard Fault");
+        JMenuItem simulateHardFaultItem = new JMenuItem("Simulate Hard Fault");
+        
+        simulateHardFaultMenu.add(simulateHardFaultItem);
+
+        // create the menu bar and add the menus to it
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(startMenu);
+        menuBar.add(simulateTransientMenu);
+        menuBar.add(simulateHardFaultMenu);
+
+        // add the menu bar to the frame
+        setJMenuBar(menuBar);
 
         this.floorSubSystemControlPanel = new JPanel(new BorderLayout());
         floorSubSystemControlPanel.setBorder( BorderFactory.createLineBorder(Color.black));
