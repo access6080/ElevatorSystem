@@ -107,20 +107,20 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
         }
         elevatorSubSystemControlPanel.add(new JScrollPane(elevatorList), BorderLayout.CENTER);
 
-        JPanel schedulerControlPanel = new JPanel(new BorderLayout());
-        schedulerControlPanel.setBorder(new LineBorder(Color.BLACK));
-        schedulerControlPanel.setPreferredSize(new Dimension(500, 400));
-        schedulerControlPanel.add(new JLabel("Scheduler", SwingConstants.CENTER), BorderLayout.PAGE_START);
-
-        schedulerOutputPanel = new JPanel();
-        schedulerOutputPanel.setLayout(new BoxLayout(schedulerOutputPanel, BoxLayout.Y_AXIS));
-        schedulerControlPanel.add(new JScrollPane(schedulerOutputPanel),BorderLayout.CENTER);
+       // JPanel schedulerControlPanel = new JPanel(new BorderLayout());
+//        schedulerControlPanel.setBorder(new LineBorder(Color.BLACK));
+//        schedulerControlPanel.setPreferredSize(new Dimension(500, 400));
+//        schedulerControlPanel.add(new JLabel("Scheduler", SwingConstants.CENTER), BorderLayout.PAGE_START);
+//
+//        schedulerOutputPanel = new JPanel();
+//        schedulerOutputPanel.setLayout(new BoxLayout(schedulerOutputPanel, BoxLayout.Y_AXIS));
+//        schedulerControlPanel.add(new JScrollPane(schedulerOutputPanel),BorderLayout.CENTER);
 
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(new LineBorder(Color.BLACK));
         rightPanel.setPreferredSize(new Dimension(500, 800));
         rightPanel.add(elevatorSubSystemControlPanel, BorderLayout.NORTH);
-        rightPanel.add(schedulerControlPanel, BorderLayout.SOUTH);
+
 
 
         this.add(rightPanel, BorderLayout.LINE_END);
@@ -128,9 +128,7 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
         this.pack();
     }
 
-    public void addLog(String log){
-        schedulerOutputPanel.add(new JLabel(log));
-    }
+
     
     public static void main(String[] args) {
         new ElevatorSystemFrame();
@@ -145,38 +143,27 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
                 elevatorPanels[event.getElevatorNum()].updateCurrentFloor(event.getCurrentFloor());
                 elevatorPanels[event.getElevatorNum()].changeIdleStatus(ElevatorPanel.elevatorIdleState.NOT_IDLE);
             }
-            case Log -> addLog(event.getLog());
+
         }
     }
 
     public void simulateNormalOperation(){
         FloorSubSystem floorsubsystem = new FloorSubSystem("normal.txt");
-        ElevatorSubsystem elevatorsubsystem = new ElevatorSubsystem(floorNum);
-        Scheduler scheduler = new Scheduler();
+        floorsubsystem.addView(this);
 
         floorsubsystem.run();
-        elevatorsubsystem.run();
-        scheduler.run();
     }
 
     public void simulateTransientFault(){
         FloorSubSystem floorsubsystem = new FloorSubSystem("transient.txt");
-        ElevatorSubsystem elevatorsubsystem = new ElevatorSubsystem(floorNum);
-        Scheduler scheduler = new Scheduler();
 
         floorsubsystem.run();
-        elevatorsubsystem.run();
-        scheduler.run();
     }
 
     public void simulateHardFault(){
         FloorSubSystem floorsubsystem = new FloorSubSystem("Hard.txt");
-        ElevatorSubsystem elevatorsubsystem = new ElevatorSubsystem(floorNum);
-        Scheduler scheduler = new Scheduler();
 
         floorsubsystem.run();
-        elevatorsubsystem.run();
-        scheduler.run();
     }
 
 

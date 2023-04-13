@@ -63,6 +63,7 @@ public class Scheduler {
         this.elevatorLocations = initializeElevatorLocations();
         this.elevatorStatuses  = initializeElevatorStatus();
         this.algorithm = new SchedulerAlgorithm();
+        this.views =  new ArrayList<>();
 
         DatagramSocket sendReceiveSocket;
         try {
