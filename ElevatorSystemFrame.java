@@ -10,7 +10,6 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
     private int elevNum;
     private FloorPanel[] floorPanels;
     private ElevatorPanel[] elevatorPanels;
-    private JPanel schedulerOutputPanel;
 
     public ElevatorSystemFrame() {
         String[] options = {"Default Values", "Custom values"};
@@ -107,14 +106,6 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
         }
         elevatorSubSystemControlPanel.add(new JScrollPane(elevatorList), BorderLayout.CENTER);
 
-       // JPanel schedulerControlPanel = new JPanel(new BorderLayout());
-//        schedulerControlPanel.setBorder(new LineBorder(Color.BLACK));
-//        schedulerControlPanel.setPreferredSize(new Dimension(500, 400));
-//        schedulerControlPanel.add(new JLabel("Scheduler", SwingConstants.CENTER), BorderLayout.PAGE_START);
-//
-//        schedulerOutputPanel = new JPanel();
-//        schedulerOutputPanel.setLayout(new BoxLayout(schedulerOutputPanel, BoxLayout.Y_AXIS));
-//        schedulerControlPanel.add(new JScrollPane(schedulerOutputPanel),BorderLayout.CENTER);
 
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(new LineBorder(Color.BLACK));
@@ -124,27 +115,8 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
 
 
         this.add(rightPanel, BorderLayout.LINE_END);
-        setVisible(true);
         this.pack();
-    }
-
-
-    
-    public static void main(String[] args) {
-        new ElevatorSystemFrame();
-    }
-
-    @Override
-    public void update(ElevatorSystemEvent event) {
-        switch(event.getType()){
-            case ToggleDirectionLamp -> floorPanels[event.getFloorNum()].toggleDirectionLamp();
-            case ToggleFloorLamp -> floorPanels[event.getFloorNum()].toggleFloorLamp();
-            case UpdateFloorNumber -> {
-                elevatorPanels[event.getElevatorNum()].updateCurrentFloor(event.getCurrentFloor());
-                elevatorPanels[event.getElevatorNum()].changeIdleStatus(ElevatorPanel.elevatorIdleState.NOT_IDLE);
-            }
-
-        }
+        setVisible(true);
     }
 
     public void simulateNormalOperation(){
@@ -162,9 +134,25 @@ public class ElevatorSystemFrame extends JFrame implements ElevatorSystemView {
 
     public void simulateHardFault(){
         FloorSubSystem floorsubsystem = new FloorSubSystem("Hard.txt");
-
         floorsubsystem.run();
     }
 
+    @Override
+    public void update(ElevatorSystemEvent event) {
+        switch(event.getType()){
+            case ToggleDirectionLamp -> floorPanels[event.getFloorNum()].toggleDirectionLamp();
+            case ToggleFloorLamp -> floorPanels[event.getFloorNum()].toggleFloorLamp();
+            case UpdateFloorNumber -> {
+                elevatorPanels[event.getElevatorNum()].updateCurrentFloor(event.getCurrentFloor());
+                elevatorPanels[event.getElevatorNum()].changeIdleStatus(ElevatorPanel.elevatorIdleState.NOT_IDLE);
+            }
 
+        }
+        this.revalidate();
+        this.repaint();
+    }
+
+    public static void main(String[] args) {
+        new ElevatorSystemFrame();
+    }
 }

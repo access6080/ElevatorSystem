@@ -21,6 +21,8 @@ public class ElevatorPanel extends JPanel {
 
         this.idleState = new JButton();
         idleState.setBackground(Color.yellow);
+        idleState.setOpaque(true);
+        idleState.setBorderPainted(true);
         idleStatePanel.add(idleState);
         this.add(idleStatePanel, BorderLayout.CENTER);
 
@@ -47,6 +49,8 @@ public class ElevatorPanel extends JPanel {
 
     public void updateCurrentFloor(int currentFloor){
         this.currentFloor.setText(String.valueOf(currentFloor));
+        this.repaint();
+        this.revalidate();
     }
 
 }

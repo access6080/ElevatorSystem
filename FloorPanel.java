@@ -20,6 +20,8 @@ public class FloorPanel extends JPanel {
 
         this.directionLamp = new JButton();
         directionLamp.setBackground(Color.RED);
+        directionLamp.setOpaque(true);
+        directionLamp.setBorderPainted(true);
         directionLampPanel.add(directionLamp);
         this.add(directionLampPanel, BorderLayout.CENTER);
 
@@ -30,6 +32,8 @@ public class FloorPanel extends JPanel {
 
         this.floorLamp = new JButton();
         floorLamp.setBackground(Color.red);
+        floorLamp.setOpaque(true);
+        floorLamp.setBorderPainted(true);
         floorLampPanel.add(floorLamp);
         this.add(floorLampPanel, BorderLayout.EAST);
 
